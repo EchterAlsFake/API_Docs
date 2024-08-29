@@ -95,3 +95,63 @@ print(video.publish_date)
 # Download the Video
 video.download(quality="best", path="./") # Some have more arguments, see # Downloaders below
 ```
+
+## Search Example
+We are using `xnxx_api` as an example here:
+
+```python
+from xnxx_api import Client
+
+client = Client()
+search = client.search(query="Fortnite")
+
+for video_result in search:
+    print(video_result.title) # video_result is always a Video object
+
+```
+
+#### Filters
+Searching usually has filters, which are the same filters as you can see on the website.
+In the case of `xnxx_api` these are:
+
+- `upload_time`
+- `length`
+- `searching_quality`
+
+These filters expect an attribute of a class. You can find them in the modules directory of the API.
+Example:
+
+```python
+from xnxx_api import Client
+from xnxx_api.modules.search_filters import UploadTime, SearchingQuality, Length # Example import
+
+search = Client().search(upload_time=UploadTime.year, length=Length.X_20min_plus)
+```
+
+It works like this on every API. Just import the search filters, and use your IDE's code completion to see what
+you can do.
+
+
+# Pornstar object
+
+The Pornstar class often refers to a model of the site. Models usually have a specific link and you can get
+videos from the model using the Pornstar object. 
+
+We are using `hqporner_api` in this example:
+
+```python
+from hqporner_api import Client
+
+client = Client()
+pornstar = client.get_videos_by_actress(name="Anissa Kate")
+
+# Sometimes it's the name, sometimes it's a URL.
+
+for video in pornstar:
+    print(video.title)
+    
+# Sometimes the Pornstar object also has attributes, e,g. xvideos does have.
+```
+
+# License
+All APIs are licensed under LGPLv3 if not marked otherwise in the specific README.
