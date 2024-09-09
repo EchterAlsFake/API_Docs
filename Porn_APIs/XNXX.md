@@ -16,6 +16,7 @@ from re import search
 
 
 # Table of Contents
+- [Installation](#installation)
 - [Importing the API](#importing-the-api)
 - [Initializing the Client](#initializing-the-client)
 - [The Video object](#the-video-object)
@@ -27,6 +28,20 @@ from re import search
 - [Locals](#locals)
   - [Quality](#the-quality-object)
   - [Searching Filters](#searching-filters)
+
+# Installation
+Installation from `Pypi`:
+
+$ `pip install xnxx_api`
+
+Or Install directly from `GitHub`
+
+`pip install git+https://github.com/EchterAlsFake/xnxx_api`
+
+> [!NOTE]
+> Installing from git may cause issues as I am not separating the master branch
+> from commits which could break thing unexpectedly!
+
 
 # Importing the API
 

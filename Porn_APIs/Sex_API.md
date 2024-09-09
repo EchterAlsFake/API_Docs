@@ -24,11 +24,18 @@
 - [Searching](#searching)
 
 # Installation
-- PyPi: `pip install sex_api`
-- GitHub: `pip install git+https://github.com/EchterAlsFake/Sex_API`
+Installation from `Pypi`:
+
+$ `pip install sex_api`
+
+Or Install directly from `GitHub`
+
+`pip install git+https://github.com/EchterAlsFake/sex_api`
 
 > [!NOTE]
-> Sex API should support Python 3.7+
+> Installing from git may cause issues as I am not separating the master branch
+> from commits which could break thing unexpectedly!
+
 
 # The Client
 The Client is where all the functionality comes from.

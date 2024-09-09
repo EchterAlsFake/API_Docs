@@ -14,7 +14,6 @@
 
 
 ## Table of Contents
-
 - [Installation](#installation)
 - [Usage](#usage)
 - [Quality](#quality)
@@ -23,18 +22,17 @@
 - [Quality](#quality)
 
 # Installation
-
-Installation using pip:
+Installation from `Pypi`:
 
 $ `pip install spankbang_api`
 
-Or Install directly from GitHub
+Or Install directly from `GitHub`
 
 `pip install git+https://github.com/EchterAlsFake/spankbang_api`
 
-# Important Notice
-The ToS of spankbang.com clearly say that using scrapers / bots isn't allowed.
-> Using this API is at your risk. I am not liable for your actions!
+> [!NOTE]
+> Installing from git may cause issues as I am not separating the master branch
+> from commits which could break thing unexpectedly!
 
 
 # Usage

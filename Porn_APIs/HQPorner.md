@@ -31,27 +31,41 @@
 
 # Installation
 
-Installation using pip:
+Installation from `Pypi`:
 
 $ `pip install hqporner_api`
 
-Or Install directly from GitHub
+Or Install directly from `GitHub`
 
 `pip install git+https://github.com/EchterAlsFake/hqporner_api`
 
-# Important Notice
-The ToS of hqporner.com clearly say that using scrapers / bots isn't allowed.
-> Using this API is at your risk. I am not liable for your actions!
+> [!NOTE]
+> Installing from git may cause issues as I am not separating the master branch
+> from commits which could break thing unexpectedly!
 
+# Imports
+> [!IMPORTANT]
+> You don't need all of them, but I will list all importable packages, functions and classes
+> here, so that there are no issues in the future. All these extra functions will be described
+> further down!
 
-# Usage
-
-Import HQPorner API like in the example below:
 
 ```python
-from hqporner_api import Client, Quality, Video
-from hqporner_api import locals, errors
+from hqporner_api import Client, Video
+from hqporner_api.modules.errors import (InvalidURL, InvalidActress, InvalidCategory, WeirdError,
+                                         NoVideosFound, NotAvailable)
+from hqporner_api.modules.locals import Sort, Category
+from base_api.modules.download import default, threaded, FFMPEG
+from base_api.modules.progress_bars import Callback
+from base_api.modules.quality import Quality
 ```
+
+### **In most of the cases you ONLY need the `Client` class.**
+
+> [!NOTE]
+> The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
+> a similar way, which is why I created this package. 
+> <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
 
 # Client
 ### Initialize a Client
@@ -226,6 +240,15 @@ The quality class is used for video downloading. It has three attributes:
 - Quality.WORST == `worst`
 
 
+# Internal code efficiency and other mentionable things
+
+# Caching
+Most objects such as the `Video` attributes are cached, meaning that if you
+fetch the same video once again, your system will automatically display the cached
+values and won't newly fetch everything.
+
+You can see if an object is cached when at the top of the function name, there is a
+`cached_property` decorator (in the code)
 
 
 
