@@ -6,6 +6,11 @@
 > - License: LGPLv3
 > - Dependencies: requests, beautifulsoup (bs4), eaf_base_api
 
+# WARNING
+> [!WARNING]
+> This API is against the Terms of Services of `hqporner.com`. Usage is at your risk.
+> I (the Author) am NOT liable for damages caused by misuse of this API package!
+
 ## Table of Contents
 
 - [Installation](#installation)
