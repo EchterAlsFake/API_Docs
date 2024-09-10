@@ -11,8 +11,6 @@
 > This API is against the Terms of Services of `sex.com`. Usage is at your risk.
 > I (the Author) am NOT liable for damages caused by misuse of this API package!
 
-
-
 # Table of Contents
 - [Installation](#installation)
 - [The Client Object](#the-client)
@@ -36,20 +34,21 @@ Or Install directly from `GitHub`
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
+# The main objects and classes
 
-# The Client
-The Client is where all the functionality comes from.
+## Client
 
 ```python
-from sex_api.api import Client
+from hqporner_api.api import Client
 client = Client()
-
-# The client has the following functions:
-
-pin = client.get_pin("<url>")     # Returns a Pin object
-user = client.get_user("<url>")   # Returns a User object
-board = client.get_board("<url>") # Returns a Board object
 ```
+
+> [!NOTE]
+> The client handles everything, and you should **ALWAYS** import and set it up!
+
+
+
+
 
 # The Pin object
 

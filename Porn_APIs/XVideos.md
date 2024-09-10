@@ -51,18 +51,17 @@ Or Install directly from `GitHub`
 from xvideos_api import Client, Quality, threaded, default, FFMPEG
 ```
 
-# Initializing the Client
+# The main objects and classes
 
-- The Client is needed for all basic operations and will be used to handle everything.
+## Client
 
 ```python
 from xvideos_api import Client
-
 client = Client()
-
-# Now you can fetch a Video object:
-video = client.get_video("<video_url")
 ```
+
+> [!NOTE]
+> The client handles everything, and you should **ALWAYS** import and set it up!
 
 
 # The Video Object

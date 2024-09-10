@@ -67,13 +67,17 @@ from base_api.modules.quality import Quality
 > a similar way, which is why I created this package. 
 > <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
 
-# Client
-### Initialize a Client
+# The main objects and classes
+
+## Client
 
 ```python
-from hqporner_api.api import Client
+from hqporner_api import Client
 client = Client()
 ```
+
+> [!NOTE]
+> The client handles everything, and you should **ALWAYS** import and set it up!
 
 ### Get a video object
 
