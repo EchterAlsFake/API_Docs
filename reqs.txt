@@ -1,6 +1,6 @@
-xvideos_api
-hqporner_api
-xnxx_api
-spankbang_api
-sex_api
-xvideos_api
+git+https://github.com/EchterAlsFake/xvideos_api
+git+https://github.com/EchterAlsFake/hqporner_api
+git+https://github.com/EchterAlsFake/xnxx_api
+git+https://github.com/EchterAlsFake/spankbang_api
+git+https://github.com/EchterAlsFake/sex_api
+git+https://github.com/EchterAlsFake/xvideos_api

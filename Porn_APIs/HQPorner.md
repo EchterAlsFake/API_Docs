@@ -12,11 +12,11 @@
 > I (the Author) am NOT liable for damages caused by misuse of this API package!
 
 ## Table of Contents
-
 - [Installation](#installation)
-- [Usage](#usage)
+- [Imports](#imports)
 - [Quality](#quality)
-- [Client](#client)
+- [Main objects](#the-main-objects-and-classes)
+  - [Client](#client)
   - [Video](#video-attributes)
   - [Videos by Actress](#get-videos-by-actress)
   - [Videos by Category](#get-videos-by-category)
@@ -28,6 +28,7 @@
 - [Locals](#locals)
 - [Exceptions](#exceptions)
 - [Quality](#quality)
+- [Performance](#internal-code-efficiency-and-other-mentionable-things)
 
 # Installation
 
@@ -86,31 +87,31 @@ from hqporner_api.api import Client
 video = Client().get_video(url="<video_url>")
 ```
 
-### Cached Objects
+<details>
+  <summary>All Video attributes</summary>
 
-Most objects are cached. Meaning that every time you access the API without changing the video, the attributes
-aren't reloaded. Instead, they are cached. This makes it very efficient. 
+  
+  | Attribute             | Returns | is cached? |
+  |:----------------------|:-------:|:----------:|
+  | .title                |   str   |    Yes     |
+  | .pornstars            |  list   |    Yes     |
+  | .length               |   str   |    Yes     |
+  | .publish_date         |   str   |    Yes     |
+  | .categories           |  list   |    Yes     |
+  | .video_qualities      |  list   |    Yes     |
+  | .direct_download_urls |  list   |    Yes     |
+  | .get_thumbnails       |  list   |     No     |
+  
+  ### Thumbnails
+  
+  The .get_thumbnails() function from the video objects will return a list.
+  <br>The list contains 11 items. The first one is the thumbnail, and the 10 others
+  <br>are the thumbnails you see when you hover of the video.
 
-## Video Attributes
 
-| Attribute             | Returns | is cached? |
-|:----------------------|:-------:|:----------:|
-| .title                |   str   |    Yes     |
-| .pornstars            |  list   |    Yes     |
-| .length               |   str   |    Yes     |
-| .publish_date         |   str   |    Yes     |
-| .categories           |  list   |    Yes     |
-| .video_qualities      |  list   |    Yes     |
-| .direct_download_urls |  list   |    Yes     |
-| .get_thumbnails       |  list   |     No     |
+</details>
 
-### Thumbnails
-
-The .get_thumbnails() function from the video objects will return a list.
-<br>The list contains 11 items. The first one is the thumbnail, and the 10 others
-<br>are the thumbnails you see when you hover of the video.
-
-## Download a video
+### Download a video
 
 
 ```python
@@ -138,7 +139,7 @@ def custom_callback(downloaded, total):
 
 ```
 
-## Get videos by actress
+### Get videos by actress
 
 ```python
 from hqporner_api import Client
@@ -154,7 +155,7 @@ for video in actress_object:
 # This will include ALL videos. Not only from the first page.
 ```
 
-## Get videos by category
+### Get videos by category
 
 ```python
 from hqporner_api import Client
@@ -174,7 +175,7 @@ The Category can also be a string. e.g Category.BIG_TITS would be equivalent to 
 
 ```
 
-## Search for videos
+### Search for videos
 
 ```python
 from hqporner_api.api import Client
@@ -184,7 +185,7 @@ for video in videos:
     print(video.title)
 ```
 
-## Get top porn
+### Get top porn
 
 ```python
 from hqporner_api import Client
@@ -201,22 +202,22 @@ Sort:
 ```
 
 
-## Get all categories
+### Get all categories
 ```python
 from hqporner_api import Client
 categories = Client().get_all_categories() # Returns a list with all possible categories
 ```
 
-## Get random video
+### Get random video
 ```python
 from hqporner_api import Client
 random_video = Client().get_random_video() # Returns a random video object
 ```
 
-## Get brazzers videos
+### Get brazzers videos
 ```python
 from hqporner_api.api import Client
-brazzers_videos = Client().get_brazzers_videos() # Returns brazzers videos (generator) (pages: optional)
+brazzers_videos = Client().get_brazzers_videos() # Returns brazzers videos (generator)
 ```
 
 # Locals
@@ -237,7 +238,8 @@ The quality class is used for video downloading. It has three attributes:
 - Quality.HALF (representing something in the middle)
 - Quality.WORST (representing the worst quality)
 
-! This can also be a string instead of the object like:
+> [!NOTE]:
+> This can also be given as a string
 
 - Quality.BEST == `best`
 - Quality.HALF == `half`
