@@ -83,7 +83,7 @@ client = Client()
 ### Get a video object
 
 ```python
-from hqporner_api.api import Client
+from hqporner_api import Client
 video = Client().get_video(url="<video_url>")
 ```
 
@@ -222,6 +222,10 @@ brazzers_videos = Client().get_brazzers_videos() # Returns brazzers videos (gene
 
 # Locals
 
+> [!IMPORTANT]
+> Every local argument can be given as a string. For example the Quality object can be
+> represented with `best`, `half`, `worst` instead of `Quality.BEST` etc...
+
 ## Exceptions
 
 There are three exceptions:
@@ -238,7 +242,7 @@ The quality class is used for video downloading. It has three attributes:
 - Quality.HALF (representing something in the middle)
 - Quality.WORST (representing the worst quality)
 
-> [!NOTE]:
+> [!NOTE]
 > This can also be given as a string
 
 - Quality.BEST == `best`

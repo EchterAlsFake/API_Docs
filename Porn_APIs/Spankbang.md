@@ -22,6 +22,7 @@
 - [Quality](#quality)
 
 # Installation
+
 Installation from `Pypi`:
 
 $ `pip install spankbang_api`
@@ -34,22 +35,39 @@ Or Install directly from `GitHub`
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
+# Imports
+> [!IMPORTANT]
+> You don't need all of them, but I will list all importable packages, functions and classes
+> here, so that there are no issues in the future. All these extra functions will be described
+> further down!
 
-# Usage
-
-Import Spankbang API like in the example below:
 
 ```python
-from spankbang_api import Client, Quality, Video, threaded, default, FFMPEG
+from spankbang_api.spankbang_api import Client, Search, Quality, Callback, Video, default, threaded, FFMPEG, legacy_download
+from spankbang_api.modules import consts
+from base_api.modules.download import default, threaded, FFMPEG
+from base_api.modules.progress_bars import Callback
+from base_api.modules.quality import Quality
 ```
 
-# Client
-### Initialize a Client
+### **In most of the cases you ONLY need the `Client` class.**
+
+> [!NOTE]
+> The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
+> a similar way, which is why I created this package. 
+> <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
+
+# The main objects and classes
+
+## Client
 
 ```python
 from spankbang_api import Client
 client = Client()
 ```
+
+> [!NOTE]
+> The client handles everything, and you should **ALWAYS** import and set it up!
 
 ### Get a video object
 
@@ -58,26 +76,24 @@ from spankbang_api import Client
 video = Client().get_video(url="<video_url>")
 ```
 
-### Cached Objects
+<details>
+  <summary>All Video attributes</summary>
+        
+    | Attribute             | Returns  | is cached? |
+    |:----------------------|:--------:|:----------:|
+    | .title                |   str    |    Yes     |
+    | .author               |   str    |    Yes     |
+    | .length               |   str    |    Yes     |
+    | .publish_date         |   str    |    Yes     |
+    | .tags                 |   list   |    Yes     |
+    | .video_qualities      |   list   |    Yes     |
+    | .direct_download_urls |   list   |    Yes     |
+    | .thumbnail            |   str    |    Yes     |
+    | .description          |   str    |    Yes     |
+    | .embed_url            |   str    |    Yes     | 
+    | .rating               | str (%)  |    Yes     |
 
-Most objects are cached. Meaning that every time you access the API without changing the video, the attributes
-aren't reloaded. Instead, they are cached. This makes it very efficient. 
-
-## Video Attributes
-
-| Attribute             | Returns  | is cached? |
-|:----------------------|:--------:|:----------:|
-| .title                |   str    |    Yes     |
-| .author               |   str    |    Yes     |
-| .length               |   str    |    Yes     |
-| .publish_date         |   str    |    Yes     |
-| .tags                 |   list   |    Yes     |
-| .video_qualities      |   list   |    Yes     |
-| .direct_download_urls |   list   |    Yes     |
-| .thumbnail            |   str    |    Yes     |
-| .description          |   str    |    Yes     |
-| .embed_url            |   str    |    Yes     | 
-| .rating               | str (%)  |    Yes     |
+</details>
 
 ## Download a video
 
@@ -106,7 +122,7 @@ Arguments:
 - downloader: Can be a downloader object or a string: ("threaded", "FFMPEG", "default")
 
 The Downloader defines which method will be used to fetch the segments. FFMPEG is the most stable one, but not as fast
-as the threaded one and it needs FFMPEG installed on your system. The "default" will fetch one segment by one, which is
+as the threaded one, and it needs FFMPEG installed on your system. The "default" will fetch one segment by one, which is
 very slow, but stable. Threaded downloads can get as high as 70 MB per second.
 
 - no_title: `True` or `False` if the video title shouldn't be assigned automatically. If you set this to `True`, you need
