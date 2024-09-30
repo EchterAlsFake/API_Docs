@@ -15,10 +15,10 @@
 
 ## Table of Contents
 - [Installation](#installation)
-- [Usage](#usage)
 - [Quality](#quality)
 - [Client](#client)
-  - [Video](#video-attributes)
+  - [Video](#get-a-video-object)
+  - [Download videos](#download-a-video)
 - [Quality](#quality)
 
 # Installation
@@ -117,7 +117,6 @@ def custom_callback(downloaded, total):
 ```
 
 Arguments:
-
 - quality: Can be a Quality object or a string: ("best", "half", "worst")
 - downloader: Can be a downloader object or a string: ("threaded", "FFMPEG", "default")
 
@@ -130,8 +129,7 @@ to include the title by yourself into the output path and additionally the file 
 
 - use_hls: `True` or `False` whether to use segment downloading or raw file downloading. Raw file downloading is the easiest one,
 but if you use this you circumvent spankbang's login system, so might not be the best -_-, but hey I don't care ;) 
-
-  
+ 
 ## Quality
 
 The quality class is used for video downloading. It has three attributes:

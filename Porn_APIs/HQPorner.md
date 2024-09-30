@@ -15,9 +15,8 @@
 - [Installation](#installation)
 - [Imports](#imports)
 - [Quality](#quality)
-- [Main objects](#the-main-objects-and-classes)
-  - [Client](#client)
-  - [Video](#video-attributes)
+- [Client](#client)
+  - [Video](#get-a-video-object)
   - [Videos by Actress](#get-videos-by-actress)
   - [Videos by Category](#get-videos-by-category)
   - [Search for Videos](#search-for-videos)
@@ -67,8 +66,6 @@ from base_api.modules.quality import Quality
 > The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
 > a similar way, which is why I created this package. 
 > <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
-
-# The main objects and classes
 
 ## Client
 
@@ -125,8 +122,8 @@ video.download(quality=quality)
 # by default all videos are downloaded to the current working directory.
 # You can change this by specifying an output path:
 
-video.download(quality=quality, path="your_path_here + video_tite.mp4")
-# NOTE: The video title isn't automatically assigned to the output path!
+video.download(quality=quality, path="your_path_here")
+
 # Custom Callback
 
 # You can define your own callback instead if tqdm. You must make a function that takes pos and total as arguments.
@@ -136,8 +133,15 @@ def custom_callback(downloaded, total):
 
     percentage = (downloaded / total) * 100
     print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
-
 ```
+
+Arguments:
+- quality: Can be a Quality object or a string: ("best", "half", "worst")
+- no_title: `True` or `False` if the video title shouldn't be assigned automatically. If you set this to `True`, you need
+to include the title by yourself into the output path and additionally the file extension.
+
+
+
 
 ### Get videos by actress
 

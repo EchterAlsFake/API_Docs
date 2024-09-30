@@ -1,5 +1,3 @@
-from re import search
-
 # XNXX API Documentation
 
 > - Version 1.4.1
@@ -17,12 +15,10 @@ from re import search
 
 # Table of Contents
 - [Installation](#installation)
-- [Importing the API](#importing-the-api)
-- [Initializing the Client](#initializing-the-client)
-- [The Video object](#the-video-object)
-    - [Attributes](#attributes)
-    - [Downloading](#downloading-a-video)
-    - [Custom callback](#custom-callback-for-downloading--videos)
+- [Importing the API](#imports)
+- [Initializing the Client](#client)
+- [The Video object](#get-a-video-object)
+    - [Downloading](#download-a-video)
 - [Searching](#searching)
 - [Model / Users](#models--users)
 - [Locals](#locals)
@@ -42,65 +38,68 @@ Or Install directly from `GitHub`
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
+# Imports
+> [!IMPORTANT]
+> You don't need all of them, but I will list all importable packages, functions and classes
+> here, so that there are no issues in the future. All these extra functions will be described
+> further down!
 
-# Importing the API
-
-#### To import all modules, you should use the following:
 
 ```python
-from xnxx_api import Client, Quality
+from xnxx_api import Client, Video, errors, search_filters, category 
+from base_api.modules.download import default, threaded, FFMPEG
+from base_api.modules.progress_bars import Callback
+from base_api.modules.quality import Quality
 ```
 
-# The main objects and classes
+### **In most of the cases you ONLY need the `Client` class.**
+
+> [!NOTE]
+> The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
+> a similar way, which is why I created this package. 
+> <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
+
 
 ## Client
 
 ```python
-from hqporner_api.api import Client
+from xnxx_api import Client
 client = Client()
 ```
 
 > [!NOTE]
 > The client handles everything, and you should **ALWAYS** import and set it up!
 
+### Get a video object
 
-# The Video Object
+```python
+from xnxx_api import Client
+video = Client().get_video(url="<video_url>")
+```
 
-The video object has the following values:
+<details>
+  <summary>All Video attributes</summary>
+    
+  | Attribute        | Returns |  is cached?   |
+  |:-----------------|:-------:|:-------------:|
+  | .title           |   str   |      Yes      |
+  | .author          |   str   |      Yes      |
+  | .length          |   str   |      Yes      |
+  | .highest_quality |   str   |      Yes      |
+  | .views           |   int   |      Yes      |
+  | .comment_count   |   int   |      Yes      |
+  | .likes           |   int   |      Yes      |
+  | .dislikes        |   int   |      Yes      |
+  | .pornstars       |  list   |      Yes      |
+  | .description     |   str   |      Yes      |
+  | .tags            |  list   |      Yes      |
+  | .thumbnail_url   |  list   |      Yes      |
+  | .publish_date    |   str   |      Yes      |
+  | .content_url     |   str   |      Yes      |
 
-### Attributes
+</details>
 
-| Attribute        | Returns |  is cached?   |
-|:-----------------|:-------:|:-------------:|
-| .title           |   str   |      Yes      |
-| .author          |   str   |      Yes      |
-| .length          |   str   |      Yes      |
-| .highest_quality |   str   |      Yes      |
-| .views           |   int   |      Yes      |
-| .comment_count   |   int   |      Yes      |
-| .likes           |   int   |      Yes      |
-| .dislikes        |   int   |      Yes      |
-| .pornstars       |  list   |      Yes      |
-| .description     |   str   |      Yes      |
-| .tags            |  list   |      Yes      |
-| .thumbnail_url   |  list   |      Yes      |
-| .publish_date    |   str   |      Yes      |
-| .content_url     |   str   |      Yes      |
-
-### Downloading a Video:
-
-Explanation: 
-
-Videos are downloaded using segments. These are extracted from the master m3u8 for a given Quality.
-There are three ways of downloading videos:
-
-- Default: fetching one by one segment
-- FFMPEG: Let ffmpeg handle all this for you
-- Threaded: Using multiple workers to fetch the segments (recommended!)
-
-When downloading a video, you can give a `downloader` argument which represents a downloader.
-
-You can import the three downloaders using:
+### Download a video
 
 ```python
 from base_api.modules.download import FFMPEG, threaded, default
@@ -109,32 +108,31 @@ from xnxx_api.xnxx_api import Client
 
 client = Client()
 video = client.get_video("...")
-video.download(downloader=threaded, quality=Quality.BEST, path="./IdontKnow.mp4")
+video.download(downloader=threaded, quality=Quality.BEST, path="./")
                                             # See Locals
-# This will save the video in the current working directory with the filename "IdontKnow.mp4"
-```
+# This will save the video in the current working directory with the filename being the video title
+# Custom Callback
 
-### Custom Callback for downloading videos
-
-You may want to specify a custom callback for downloading videos. Luckily for you, I made it as easy as
-possible :)
-
-1. Create a callback function, which takes `pos` and `total` as arguments.
-2. `pos` represents the current number of downloaded segments
-3. `total` represents the total number of segments
-
-Here's an example:
-
-```python
-def custom_callback(pos, total):
+# You can define your own callback instead if tqdm. You must make a function that takes pos and total as arguments.
+# This will disable tqdm
+def custom_callback(downloaded, total):
     """This is an example of how you can implement the custom callback"""
 
-    percentage = (pos / total) * 100
-    print(f"Downloaded: {pos} segments / {total} segments ({percentage:.2f}%)")
-    # You see it's really simple :)
+    percentage = (downloaded / total) * 100
+    print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
 ```
 
-When downloading a video, you can just specify your callback functions in the `callback` argument
+Arguments:
+- quality: Can be a Quality object or a string: ("best", "half", "worst")
+- downloader: Can be a downloader object or a string: ("threaded", "FFMPEG", "default")
+
+The Downloader defines which method will be used to fetch the segments. FFMPEG is the most stable one, but not as fast
+as the threaded one, and it needs FFMPEG installed on your system. The "default" will fetch one segment by one, which is
+very slow, but stable. Threaded downloads can get as high as 70 MB per second.
+
+- no_title: `True` or `False` if the video title shouldn't be assigned automatically. If you set this to `True`, you need
+to include the title by yourself into the output path and additionally the file extension.
+
 
 # Searching
 ```python
@@ -207,7 +205,7 @@ They are located in:
 
 ```python
 from xnxx_api import search_filters
-from xnxx_api.xnxx_api import Client
+from xnxx_api import Client
 # Use them like this:
 
 search = Client().search("<query>", length=search_filters.Length.X_0_10min, upload_time=search_filters.UploadTime.year,

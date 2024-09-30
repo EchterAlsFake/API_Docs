@@ -15,10 +15,9 @@
 
 # Table of Contents
 - [Installation](#installation)
-- [Importing the API](#importing-the-api)
-- [Initializing the Client](#initializing-the-client)
-- [The Video object](#the-video-object)
-    - [Attributes](#attributes)
+- [Importing the API](#imports)
+- [Initializing the Client](#client)
+- [The Video object](#get-a-video-object)
     - [Downloading](#downloading-a-video)
 - [The Pornstar object](#the-pornstar-object)
 - [Searching Videos](#searching)
@@ -43,15 +42,26 @@ Or Install directly from `GitHub`
 > from commits which could break thing unexpectedly!
 
 
-# Importing the API
+# Imports
+> [!IMPORTANT]
+> You don't need all of them, but I will list all importable packages, functions and classes
+> here, so that there are no issues in the future. All these extra functions will be described
+> further down!
 
-#### To import all modules, you should use the following:
 
 ```python
-from xvideos_api import Client, Quality, threaded, default, FFMPEG
+from xvideos_api import Client, Video, Pornstar, sorting, exceptions
+from base_api.modules.download import default, threaded, FFMPEG
+from base_api.modules.progress_bars import Callback
+from base_api.modules.quality import Quality
 ```
 
-# The main objects and classes
+### **In most of the cases you ONLY need the `Client` class.**
+
+> [!NOTE]
+> The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
+> a similar way, which is why I created this package. 
+> <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
 
 ## Client
 
@@ -63,48 +73,37 @@ client = Client()
 > [!NOTE]
 > The client handles everything, and you should **ALWAYS** import and set it up!
 
+### Get a video object
 
-# The Video Object
+```python
+from xvideos_api import Client
+video = Client().get_video(url="<video_url>")
+```
 
-The video object has the following values:
+<details>
+  <summary>All Video attributes</summary>
+  
+  | Attribute      | Returns | is cached? |
+  |:---------------|:-------:|:----------:|
+  | .title         |   str   |    Yes     |
+  | .author        |   str   |    Yes     |
+  | .length        |   str   |    Yes     |
+  | .views         |   str   |    Yes     |
+  | .comment_count |   str   |    Yes     |
+  | .likes         |   str   |    Yes     |
+  | .dislikes      |   str   |    Yes     |
+  | .rating_votes  |   str   |    Yes     |
+  | .pornstars     |  list   |    Yes     |
+  | .description   |   str   |    Yes     |
+  | .tags          |  list   |    Yes     |
+  | .thumbnail_url |  list   |    Yes     |
+  | .publish_date  |   str   |    Yes     |
+  | .content_url   |   str   |    Yes     |
+  | .embed_url     |   str   |    Yes     |
 
-### Attributes
-
-| Attribute      | Returns | is cached? |
-|:---------------|:-------:|:----------:|
-| .title         |   str   |    Yes     |
-| .author        |   str   |    Yes     |
-| .length        |   str   |    Yes     |
-| .views         |   str   |    Yes     |
-| .comment_count |   str   |    Yes     |
-| .likes         |   str   |    Yes     |
-| .dislikes      |   str   |    Yes     |
-| .rating_votes  |   str   |    Yes     |
-| .pornstars     |  list   |    Yes     |
-| .description   |   str   |    Yes     |
-| .tags          |  list   |    Yes     |
-| .thumbnail_url |  list   |    Yes     |
-| .publish_date  |   str   |    Yes     |
-| .content_url   |   str   |    Yes     |
-| .embed_url     |   str   |    Yes     |
+</details>
 
 ### Downloading a Video:
-
-Explanation: 
-
-Videos are downloaded using segments. These are extracted from the master m3u8 for a given Quality.
-There are three ways of downloading videos:
-
-- Default: fetching one by one segment
-- FFMPEG: Let ffmpeg handle all this for you
-- Threaded: Using multiple workers to fetch the segments (recommended!)
-
-> If you get problems with video stuttering: Use FFMPEG!
-> 
-When downloading a video, you can give a `downloader` argument which represents a downloader.
-
-You can import the three downloaders using:
-
 ```python
 from xvideos_api import Client, Quality, Callback, threaded, default, FFMPEG
 
@@ -113,29 +112,16 @@ video = client.get_video("...")
 video.download(downloader=threaded, quality=Quality.BEST, path="./IdontKnow.mp4", callback=Callback.text_progress_bar) 
                                             # See Locals
 # This will save the video in the current working directory with the filename "IdontKnow.mp4"
-```
+# Custom Callback
 
-### Custom Callback for downloading videos
-
-You may want to specify a custom callback for downloading videos. Luckily for you, I made it as easy as
-possible :)
-
-1. Create a callback function, which takes `pos` and `total` as arguments.
-2. `pos` represents the current number of downloaded segments
-3. `total` represents the total number of segments
-
-Here's an example:
-
-```python
-def custom_callback(pos, total):
+# You can define your own callback instead if tqdm. You must make a function that takes pos and total as arguments.
+# This will disable tqdm
+def custom_callback(downloaded, total):
     """This is an example of how you can implement the custom callback"""
 
-    percentage = (pos / total) * 100
-    print(f"Downloaded: {pos} segments / {total} segments ({percentage:.2f}%)")
-    # You see, it's really simple :)
+    percentage = (downloaded / total) * 100
+    print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
 ```
-
-When downloading a video, you can specify your callback functions in the `callback` argument
 
 # The Pornstar Object
 ```python
@@ -170,7 +156,6 @@ videos = client.search("Mia Khalifa")
 for video in videos:
   print(video.title)
 ```
-
 - One Page contains 27 videos
 - Search filters are by default the ones from xvideos
 

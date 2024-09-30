@@ -13,7 +13,7 @@
 
 # Table of Contents
 - [Installation](#installation)
-- [The Client Object](#the-client)
+- [The Client Object](#client)
 - [The Pin Object](#the-pin-object)
 - [The Tag Object](#the-tag-object)
 - [The Comment Object](#the-comment-object)
@@ -39,21 +39,14 @@ Or Install directly from `GitHub`
 ## Client
 
 ```python
-from hqporner_api.api import Client
+from sex_api import Client
 client = Client()
 ```
-
-> [!NOTE]
-> The client handles everything, and you should **ALWAYS** import and set it up!
-
-
-
-
 
 # The Pin object
 
 ```python
-from sex_api.api import Client
+from sex_api import Client
 client = Client()
 pin = client.get_pin("<url>")
 
@@ -70,7 +63,7 @@ pin.download("<output path directory>") # Returns True or False, whether downloa
 
 # The Tag object
 ```python
-from sex_api.api import Client
+from sex_api import Client
 client = Client()
 pin = client.get_pin("<url>")
 
@@ -85,7 +78,7 @@ for name in names:
 
 # The Comment object
 ```python
-from sex_api.api import Client
+from sex_api  import Client
 client = Client()
 pin = client.get_pin("<url>")
 
@@ -101,7 +94,7 @@ print(comment.messages) # The actual messages (as a list)
 
 # The User object
 ```python
-from sex_api.api import Client
+from sex_api import Client
 client = Client()
 user = client.get_user("<url>")
 
@@ -131,7 +124,7 @@ for pin in pins:
 
 # The Board object
 ```python
-from sex_api.api import Client
+from sex_api import Client
 client = Client()
 board = client.get_board("<url>")
 
@@ -150,7 +143,7 @@ for pin in pins:
 
 # Searching
 ```python
-from sex_api.api import Client
+from sex_api import Client
 from sex_api.modules.searching_filters import Mode, Relevance
 client = Client()
 
