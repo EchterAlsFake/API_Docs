@@ -94,7 +94,7 @@ video = Client().get_video(url="<video_url>")
   | .pornstars            |  list   |    Yes     |
   | .length               |   str   |    Yes     |
   | .publish_date         |   str   |    Yes     |
-  | .categories           |  list   |    Yes     |
+  | .tags                 |  list   |    Yes     |
   | .video_qualities      |  list   |    Yes     |
   | .direct_download_urls |  list   |    Yes     |
   | .get_thumbnails       |  list   |     No     |
