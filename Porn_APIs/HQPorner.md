@@ -1,6 +1,6 @@
 # HQPorner API Documentation
 
-> - Version 1.6
+> - Version 1.7
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
@@ -14,7 +14,6 @@
 ## Table of Contents
 - [Installation](#installation)
 - [Imports](#imports)
-- [Quality](#quality)
 - [Client](#client)
   - [Video](#get-a-video-object)
   - [Videos by Actress](#get-videos-by-actress)
@@ -24,10 +23,9 @@
   - [Get all categories](#get-all-categories)
   - [Random video](#get-random-video)
   - [Brazzer's Videos](#get-brazzers-videos)
-- [Locals](#locals)
+- [Proxy Support](#proxy-support)
 - [Exceptions](#exceptions)
-- [Quality](#quality)
-- [Performance](#internal-code-efficiency-and-other-mentionable-things)
+- [Caching](#caching)
 
 # Installation
 
@@ -55,9 +53,7 @@ from hqporner_api import Client, Video
 from hqporner_api.modules.errors import (InvalidURL, InvalidActress, InvalidCategory, WeirdError,
                                          NoVideosFound, NotAvailable)
 from hqporner_api.modules.locals import Sort, Category
-from base_api.modules.download import default, threaded, FFMPEG
 from base_api.modules.progress_bars import Callback
-from base_api.modules.quality import Quality
 ```
 
 ### **In most of the cases you ONLY need the `Client` class.**
@@ -112,22 +108,21 @@ video = Client().get_video(url="<video_url>")
 
 
 ```python
-from hqporner_api import Client, Quality
+from hqporner_api import Client
 client = Client()
 video = client.get_video("<video_url>")
-quality = Quality.BEST # Best quality as an example
+quality = "best" # Best quality as an example
 
 video.download(quality=quality)
 
-# by default all videos are downloaded to the current working directory.
+# By default, all videos are downloaded to the current working directory.
 # You can change this by specifying an output path:
 
 video.download(quality=quality, path="your_path_here")
 
 # Custom Callback
 
-# You can define your own callback instead if tqdm. You must make a function that takes pos and total as arguments.
-# This will disable tqdm
+# You can define your own callback instead of the text progress. Here's an example
 def custom_callback(downloaded, total):
     """This is an example of how you can implement the custom callback"""
 
@@ -135,13 +130,15 @@ def custom_callback(downloaded, total):
     print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
 ```
 
-Arguments:
-- quality: Can be a Quality object or a string: ("best", "half", "worst")
-- no_title: `True` or `False` if the video title shouldn't be assigned automatically. If you set this to `True`, you need
-to include the title by yourself into the output path and additionally the file extension.
+| Argument   | Options/Description                                                                                                                                                                     |
+|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `quality`  | `best`  `half`  `worst`                                                                                                                                                                 |
+| `no_title` | `True` or `False` - If `True`, the video title won't be assigned automatically.           <br/>You need to include the title yourself in the output path along with the file extension. |
+| `callback` | Your custom callback function                                                                                                                                                           |
+| `path`     | The output path of your video                                                                                                                                                           |
 
-
-
+If you need additional information on how the quality argument works, have a look here:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md
 
 ### Get videos by actress
 
@@ -149,7 +146,7 @@ to include the title by yourself into the output path and additionally the file 
 from hqporner_api import Client
 
 actress_object = Client().get_videos_by_actress("<actress-name>") # or URL
-# You can also enter an actress URl e.g hqporner.com/actress/...
+# You can also enter an actress URl e.g., hqporner.com/actress/...
 
 # You can now iterate through all videos from an actress:
 
@@ -224,39 +221,25 @@ from hqporner_api.api import Client
 brazzers_videos = Client().get_brazzers_videos() # Returns brazzers videos (generator)
 ```
 
-# Locals
-
-> [!IMPORTANT]
-> Every local argument can be given as a string. For example the Quality object can be
-> represented with `best`, `half`, `worst` instead of `Quality.BEST` etc...
+# Proxy Support
+Proxy support is NOT implemented in hqporner_api itself, but in its underlying network component: `eaf_base_api`
+<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
 
 ## Exceptions
 
 There are three exceptions:
 
-- InvalidCategory  (Raised when a category is invalid)
-- NoVideosFound    (Raised when no videos were found during a search)
-- InvalidActress   (Raised when an invalid actress was given)
-
-## Quality
-
-The quality class is used for video downloading. It has three attributes:
-
-- Quality.BEST (representing the best quality)
-- Quality.HALF (representing something in the middle)
-- Quality.WORST (representing the worst quality)
-
-> [!NOTE]
-> This can also be given as a string
-
-- Quality.BEST == `best`
-- Quality.HALF == `half`
-- Quality.WORST == `worst`
-
-
-# Internal code efficiency and other mentionable things
+| Exception       | Reason                                           |
+|-----------------|--------------------------------------------------|
+| InvalidCategory | Raised when a category is invalid                |
+| NoVideosFound   | Raised when no videos were found during a search |
+| InvalidActress  | Raised when an invalid actress was given         |
 
 # Caching
+All network requests (UTF-8 responses) are cached inside of the base_api.
+If you want to configure this behaviour, please see:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
+
 Most objects such as the `Video` attributes are cached, meaning that if you
 fetch the same video once again, your system will automatically display the cached
 values and won't newly fetch everything.
