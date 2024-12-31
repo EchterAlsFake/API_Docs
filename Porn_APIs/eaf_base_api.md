@@ -34,7 +34,7 @@ The following configuration options are available:
 **ONLY USE THIS IF YOU ARE AT HOME AND IT'S YOUR ONLY OPTION**
 
 To use proxies, you of course need to enable it. See [Configuration](#configuration) above.
-When yu enabled proxies by setting `consts.USE_PROXIES = True` you can define a custom dictionary of proxies.
+When you enabled proxies by setting `consts.USE_PROXIES = True` you can define a custom dictionary of proxies.
 
 ### Here's a real example:
 
