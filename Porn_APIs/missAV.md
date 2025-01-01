@@ -112,8 +112,8 @@ Proxy support is NOT implemented in hqporner_api itself, but in its underlying n
 <br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
 
 # Caching
-All network requests (UTF-8 responses) are cached inside of the base_api.
-If you want to configure this behaviour, please see:
+All network requests (UTF-8 responses) are cached inside the base_api.
+If you want to configure this behavior, please see:
 <br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 
 Most objects such as the `Video` attributes are cached, meaning that if you

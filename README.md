@@ -16,12 +16,18 @@ Maybe when I am in school and a subject unexpectedly got stand out.
 > in the READMEs. 
 
 
-# Documentations -> Projects
+# Documentation -> Projects
 
+### Main Projects
 - [Porn Fetch]()
 
-
-
+### APIs
+- [PHUB](https://phub.readthedocs.io/)
+- [HQPorner API](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/HQPorner.md)
+- [xvideos API](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/XVideos.md)
+- [XNXX API](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/XNXX.md)
+- [missAV API](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/missAV.md)
+- [Spankbang](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/Spankbang.md)
 
 
 # Contributions / Issues
