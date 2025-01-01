@@ -27,8 +27,8 @@ Compatibility:
 <br>All my APIs should support `Python3.7 - 3.12+`
 
 # Explaining the structure
-The benefit of this documentation is, that you read it one-time, and then you will be able to use all of my APIs without
-reading an additional documentation, because they all use the same methods and code-style.
+The benefit of this documentation is that you read it one-time, and then you will be able to use all of my APIs without
+reading additional documentation, because they all use the same methods and code-style.
 
 ## The Client object
 The base of all of my APIs is the `Client` class. It manages initialization of the code, and you will get all other classes 
@@ -49,7 +49,7 @@ See: [Video Example](#video-example)
 # Importing an API
 
 > [!NOTE]
-> I highly recommend you to use a high level IDE such as PyCharm, so that you can benefit from the well written code
+> I highly recommend you to use a high level IDE such as PyCharm, so that you can benefit from the well-written code
 > typing hints and doc strings!
 
 
@@ -88,7 +88,7 @@ video = client.get_video("<video_url>")
 # get some attributes
 
 print(video.title)
-print(video.categories) # returns a list in this case
+print(video.tags) # returns a list in this case
 print(video.length)
 print(video.publish_date)
 
@@ -125,16 +125,17 @@ Example:
 from xnxx_api import Client
 from xnxx_api.modules.search_filters import UploadTime, SearchingQuality, Length # Example import
 
-search = Client().search(upload_time=UploadTime.year, length=Length.X_20min_plus)
+search = Client().search(query="Mia Khalifa", upload_time=UploadTime.year, length=Length.X_20min_plus,
+                         searching_quality=SearchingQuality.X_1080p_plus)
 ```
 
-It works like this on every API. Just import the search filters, and use your IDE's code completion to see what
+It works like this on every API. Import the search filters, and use your IDE's code completion to see what
 you can do.
 
 
 # Pornstar object
 
-The Pornstar class often refers to a model of the site. Models usually have a specific link and you can get
+The Pornstar class often refers to a model of the site. Models usually have a specific link, and you can get
 videos from the model using the Pornstar object. 
 
 We are using `hqporner_api` in this example:

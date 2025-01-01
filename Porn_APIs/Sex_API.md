@@ -1,6 +1,6 @@
 # Sex API Documentation
 
-> - Version 1.2
+> - Version 1.3
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
@@ -20,6 +20,8 @@
 - [The User Object](#the-user-object)
 - [The Board Object](#the-board-object)
 - [Searching](#searching)
+- [Proxy Support](#proxy-support)
+- [Caching](#caching)
 
 # Installation
 Installation from `Pypi`:
@@ -165,3 +167,18 @@ Relevance:
 - Mode.popular > Searches for most popular Pins
 - Mode.latest > Searches for the latest Pins
 
+# Proxy Support
+Proxy support is NOT implemented in sex_api itself, but in its underlying network component: `eaf_base_api`
+<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
+
+# Caching
+All network requests (UTF-8 responses) are cached inside the base_api.
+If you want to configure this behavior, please see:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
+
+Most attributes are cached, meaning that if you
+fetch the same video once again, your system will automatically display the cached
+values and won't newly fetch everything.
+
+You can see if an object is cached when at the top of the function name, there is a
+`cached_property` decorator (in the code)

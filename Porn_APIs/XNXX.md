@@ -1,8 +1,8 @@
 # XNXX API Documentation
 
-> - Version 1.4.1
+> - Version 1.5.0
 > - Author: Johannes Habel
-> - Copyright (C) 2024
+> - Copyright (C) 2024-2025
 > - License: LGPLv3
 > - Dependencies: requests, lxml, bs4, ffmpeg-progress-yield, eaf_base_api
 > - Optional dependency: ffmpeg
@@ -20,10 +20,10 @@
 - [The Video object](#get-a-video-object)
     - [Downloading](#download-a-video)
 - [Searching](#searching)
-- [Model / Users](#models--users)
-- [Locals](#locals)
-  - [Quality](#the-quality-object)
-  - [Searching Filters](#searching-filters)
+- [Model / Users](#models--users) 
+- [Searching Filters](#searching-filters)
+- [Proxy Support](#proxy-support)
+- [Caching](#caching)
 
 # Installation
 Installation from `Pypi`:
@@ -47,9 +47,7 @@ Or Install directly from `GitHub`
 
 ```python
 from xnxx_api import Client, Video, errors, search_filters, category 
-from base_api.modules.download import default, threaded, FFMPEG
 from base_api.modules.progress_bars import Callback
-from base_api.modules.quality import Quality
 ```
 
 ### **In most of the cases you ONLY need the `Client` class.**
@@ -102,13 +100,11 @@ video = Client().get_video(url="<video_url>")
 ### Download a video
 
 ```python
-from base_api.modules.download import FFMPEG, threaded, default
-from base_api.modules.quality import Quality
 from xnxx_api.xnxx_api import Client
 
 client = Client()
 video = client.get_video("...")
-video.download(downloader=threaded, quality=Quality.BEST, path="./")
+video.download(downloader="threaded", quality="best", path="./")
                                             # See Locals
 # This will save the video in the current working directory with the filename being the video title
 # Custom Callback
@@ -122,17 +118,16 @@ def custom_callback(downloaded, total):
     print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
 ```
 
-Arguments:
-- quality: Can be a Quality object or a string: ("best", "half", "worst")
-- downloader: Can be a downloader object or a string: ("threaded", "FFMPEG", "default")
+| Argument   | Description                                  | possible values                         |
+|------------|----------------------------------------------|-----------------------------------------|
+| quality    | The video quality                            | `best` `half` `worst`                   |
+| downloader | The download mode of the video               | `threaded` `FFMPEG` `default`           |
+| path       | The output path of the video                 | Any `str` object                        |
+| callback   | Custom callback function                     | Any function with (pos,total) structure |
+| no_title   | The title will not be included into the path | `True` `False`                          |
 
-The Downloader defines which method will be used to fetch the segments. FFMPEG is the most stable one, but not as fast
-as the threaded one, and it needs FFMPEG installed on your system. The "default" will fetch one segment by one, which is
-very slow, but stable. Threaded downloads can get as high as 70 MB per second.
-
-- no_title: `True` or `False` if the video title shouldn't be assigned automatically. If you set this to `True`, you need
-to include the title by yourself into the output path and additionally the file extension.
-
+> [!NOTE]
+> For more information on the `quality` and `downloader` values See [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
 
 # Searching
 ```python
@@ -171,27 +166,6 @@ print(model.total_videos)
 
 ```
 
-
-# Locals
-
-## The Quality Object
-
-First: Import the Quality object:
-
-```python
-from base_api.modules.quality import Quality
-```
-
-There are three quality types:
-
-- Quality.BEST
-- Quality.HALF
-- Quality.WORST
-
-> [!IMPORTANT]
-> - You can also pass a string instead of a Quality object. e.g instead of `Quality.BEST`, you can say `best`
-> - The same goes for threading modes. Instead of `download.threaded` you can just say `threaded` as a string
-
 ## Searching Filters
 
 Currently, there are three filters available:
@@ -213,3 +187,19 @@ search = Client().search("<query>", length=search_filters.Length.X_0_10min, uplo
 videos = search.videos
 # I think the names explain what it does :)
 ```
+
+# Proxy Support
+Proxy support is NOT implemented in sex_api itself, but in its underlying network component: `eaf_base_api`
+<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
+
+# Caching
+All network requests (UTF-8 responses) are cached inside the base_api.
+If you want to configure this behavior, please see:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
+
+Most attributes are cached, meaning that if you
+fetch the same video once again, your system will automatically display the cached
+values and won't newly fetch everything.
+
+You can see if an object is cached when at the top of the function name, there is a
+`cached_property` decorator (in the code)

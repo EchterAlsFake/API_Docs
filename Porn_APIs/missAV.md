@@ -18,8 +18,8 @@
   - [Video](#get-a-video-object)
   - [Download a video](#download-a-video)
 
-- [Exceptions](#exceptions)
-- [Performance](#internal-code-efficiency-and-other-mentionable-things)
+- [Proxy Support](#proxy-support)
+- [Caching](#caching)
 
 # Installation
 
@@ -72,11 +72,11 @@ from missav_api import Client
 video = Client().get_video(url="<video_url>")
 ```
 
-| Attribute             | Returns | is cached? |
-|:----------------------|:-------:|:----------:|
-| .title                |   str   |    Yes     |
-
-
+| Attribute     | Returns | is cached? |
+|:--------------|:-------:|:----------:|
+| .title        |   str   |    Yes     |
+| .publish_date |   str   |    Yes     |
+| .video_code   |   str   |    Yes     |
 
 ### Download a video
 
@@ -88,10 +88,7 @@ video = client.get_video("<video_url>")
 quality = "best" 
 video.download(quality=quality, path="./", downloader="threaded")
 
-# Custom Callback
-
 # You can define your own callback function with custom progress reporting using:
-
 def custom_callback(downloaded, total):
     """This is an example of how you can implement the custom callback"""
 
@@ -99,35 +96,33 @@ def custom_callback(downloaded, total):
     print(f"Downloaded: {downloaded} / {total} segments ({percentage:.2f}%)")
 ```
 
-| Argument     | Options/Description                                                                                                                                                                     |
-|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `quality`    | `best`  `half`  `worst`                                                                                                                                                                 |
-| `downloader` | `threaded`  `FFMPEG`  `default`                                                                                                                                                         |
-| `no_title`   | `True` or `False` - If `True`, the video title won't be assigned automatically.           <br/>You need to include the title yourself in the output path along with the file extension. |
-| `callback`   | Your custom callback function                                                                                                                                                           |
+| Argument   | Description                                  | possible values                         |
+|------------|----------------------------------------------|-----------------------------------------|
+| quality    | The video quality                            | `best` `half` `worst`                   |
+| downloader | The download mode of the video               | `threaded` `FFMPEG` `default`           |
+| path       | The output path of the video                 | Any `str` object                        |
+| callback   | Custom callback function                     | Any function with (pos,total) structure |
+| no_title   | The title will not be included into the path | `True` `False`                          |
 
-For detailed information about the `quality` and the `downloader` arguments,
-have a look here: https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md
+> [!NOTE]
+> For more information on the `quality` and `downloader` values See [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
 
-## Exceptions
-There are three exceptions:
-
-| Exception       | Reason                                           |
-|-----------------|--------------------------------------------------|
-| InvalidCategory | Raised when a category is invalid                |
-| NoVideosFound   | Raised when no videos were found during a search |
-| InvalidActress  | Raised when an invalid actress was given         |
-
-
-# Internal code efficiency and other mentionable things
+# Proxy Support
+Proxy support is NOT implemented in hqporner_api itself, but in its underlying network component: `eaf_base_api`
+<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
 
 # Caching
+All network requests (UTF-8 responses) are cached inside of the base_api.
+If you want to configure this behaviour, please see:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
+
 Most objects such as the `Video` attributes are cached, meaning that if you
 fetch the same video once again, your system will automatically display the cached
 values and won't newly fetch everything.
 
 You can see if an object is cached when at the top of the function name, there is a
 `cached_property` decorator (in the code)
+
 
 
 

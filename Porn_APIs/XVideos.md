@@ -23,9 +23,8 @@
 - [Searching Videos](#searching)
     - [Basic Search](#basic-search)
     - [Using Filters](#using-filters)
-
-- [Locals](#locals)
-  - [Quality](#the-quality-object)
+- [Proxy Support](#proxy-support)
+- [Caching](#caching)
 
 # Installation
 
@@ -51,9 +50,7 @@ Or Install directly from `GitHub`
 
 ```python
 from xvideos_api import Client, Video, Pornstar, sorting, exceptions
-from base_api.modules.download import default, threaded, FFMPEG
-from base_api.modules.progress_bars import Callback
-from base_api.modules.quality import Quality
+from base_api import Callback
 ```
 
 ### **In most of the cases you ONLY need the `Client` class.**
@@ -105,23 +102,32 @@ video = Client().get_video(url="<video_url>")
 
 ### Downloading a Video:
 ```python
-from xvideos_api import Client, Quality, Callback, threaded, default, FFMPEG
+from xvideos_api import Client, Quality
+from base_api import Callback
 
 client = Client()
 video = client.get_video("...")
-video.download(downloader=threaded, quality=Quality.BEST, path="./IdontKnow.mp4", callback=Callback.text_progress_bar) 
-                                            # See Locals
-# This will save the video in the current working directory with the filename "IdontKnow.mp4"
-# Custom Callback
-
-# You can define your own callback instead if tqdm. You must make a function that takes pos and total as arguments.
-# This will disable tqdm
+video.download(downloader="threaded", quality="best", path="./IdontKnow.mp4", callback=Callback.text_progress_bar) 
+ 
+# Custom Callback Example
 def custom_callback(downloaded, total):
     """This is an example of how you can implement the custom callback"""
 
     percentage = (downloaded / total) * 100
     print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
 ```
+
+| Argument   | Description                                  | possible values                         |
+|------------|----------------------------------------------|-----------------------------------------|
+| quality    | The video quality                            | `best` `half` `worst`                   |
+| downloader | The download mode of the video               | `threaded` `FFMPEG` `default`           |
+| path       | The output path of the video                 | Any `str` object                        |
+| callback   | Custom callback function                     | Any function with (pos,total) structure |
+| no_title   | The title will not be included into the path | `True` `False`                          |
+
+> [!NOTE]
+> For more information on the `quality` and `downloader` values See [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
+
 
 # The Pornstar Object
 ```python
@@ -177,22 +183,18 @@ videos = Client.search("Mia Khalifa", sorting_Date=sorting.SortDate.Sort_all, so
 - SortDate: Sorts videos by upload date
 - SortVideoTime: Sorts videos by their length
 
+# Proxy Support
+Proxy support is NOT implemented in hqporner_api itself, but in its underlying network component: `eaf_base_api`
+<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
 
-# Locals
+# Caching
+All network requests (UTF-8 responses) are cached inside of the base_api.
+If you want to configure this behaviour, please see:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 
-## The Quality Object
+Most objects such as the `Video` attributes are cached, meaning that if you
+fetch the same video once again, your system will automatically display the cached
+values and won't newly fetch everything.
 
-First: Import the Quality object:
-
-```python
-from xvideos_api import Quality
-```
-
-There are three quality types:
-
-- Quality.BEST
-- Quality.HALF
-- Quality.WORST
-
-> - You can also pass a string instead of a Quality object. e.g., instead of `Quality.BEST`, you can say `best`
-> - The same goes for threading modes. Instead of `download.threaded` you can just say `threaded` as a string
+You can see if an object is cached when at the top of the function name, there is a
+`cached_property` decorator (in the code)

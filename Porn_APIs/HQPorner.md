@@ -236,8 +236,8 @@ There are three exceptions:
 | InvalidActress  | Raised when an invalid actress was given         |
 
 # Caching
-All network requests (UTF-8 responses) are cached inside of the base_api.
-If you want to configure this behaviour, please see:
+All network requests (UTF-8 responses) are cached inside the base_api.
+If you want to configure this behavior, please see:
 <br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 
 Most objects such as the `Video` attributes are cached, meaning that if you
