@@ -102,7 +102,7 @@ video = Client().get_video(url="<video_url>")
 
 ### Downloading a Video:
 ```python
-from xvideos_api import Client, Quality
+from xvideos_api import Client
 from base_api import Callback
 
 client = Client()
