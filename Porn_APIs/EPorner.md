@@ -1,10 +1,11 @@
 # EPorner Documentation
 
-> - Version 1.8.0
+> - Version 1.8.1
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
-> - Dependencies: requests, lxml, bs4, eaf_base_api
+> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
+m3u8, ffmpeg-progress-yield, beautifulsoup4
 
 # Important Notice
 The ToS of Eporner.com clearly say that using scrapers / bots isn't allowed.
@@ -22,7 +23,6 @@ If you are using this, you may face legal actions, so it's at your own risk!
 - [The Video Object](#video-object)
     - [Video Information](#video-information)
     - [Download a Video](#downloading-a-video)
-    - [Custom Callback](#custom-callback)
   [The Pornstar Object](#the-pornstar-object)
 - [Searching for Videos](#searching-for-videos)
 - [Videos by Category](#videos-by-category)
@@ -35,7 +35,7 @@ If you are using this, you may face legal actions, so it's at your own risk!
     - [Low Quality](#lowquality)
     - [Category](#category)
 - [Proxy Support](#proxy-support)
-- [Caching][#caching]
+- [Caching](#caching)
 
 # Installation
 

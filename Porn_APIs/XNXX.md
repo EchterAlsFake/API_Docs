@@ -1,11 +1,11 @@
 # XNXX API Documentation
 
-> - Version 1.5.0
+> - Version 1.5.1
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
-> - Dependencies: requests, lxml, bs4, ffmpeg-progress-yield, eaf_base_api
-> - Optional dependency: ffmpeg
+> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
+m3u8, ffmpeg-progress-yield, beautifulsoup4
 
 # WARNING
 > [!WARNING]

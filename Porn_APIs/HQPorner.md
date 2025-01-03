@@ -1,10 +1,11 @@
 # HQPorner API Documentation
 
-> - Version 1.7
+> - Version 1.7.1
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
-> - Dependencies: requests, beautifulsoup (bs4), eaf_base_api
+> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
+m3u8, ffmpeg-progress-yield, beautifulsoup4
 
 # WARNING
 > [!WARNING]

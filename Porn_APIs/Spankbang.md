@@ -7,6 +7,12 @@
 > - Dependencies: requests, beautifulsoup (bs4), eaf_base_api, lxml
 > - Optional dependency: ffmpeg
 
+
+
+> [!IMPORTANT]
+> Spankbang API is under being maintained. The documentation is out of date. If you still want to use the package, please install
+> eaf_base_api==1.6.2"
+
 # WARNING
 > [!WARNING]
 > This API is against the Terms of Services of `spankbang.com`. Usage is at your risk.

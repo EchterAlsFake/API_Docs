@@ -1,12 +1,11 @@
 # HQPorner API Documentation
 
-> - Version 1.0
+> - Version 1.1
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
-> - Dependencies: requests, eaf_base_api
+> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, m3u8, ffmpeg-progress-yield
 
-# WARNING
 > [!WARNING]
 > This API is against the Terms of Services of `missav.com`. Usage is at your risk.
 > I (the Author) am NOT liable for damages caused by misuse of this API package!

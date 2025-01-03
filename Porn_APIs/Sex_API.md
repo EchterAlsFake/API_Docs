@@ -1,10 +1,10 @@
 # Sex API Documentation
 
-> - Version 1.3
+> - Version 1.3.1
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
-> - Dependencies: requests, eaf_base_api
+> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio
 
 # WARNING
 > [!WARNING]

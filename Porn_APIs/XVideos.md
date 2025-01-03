@@ -1,11 +1,11 @@
 # xvideos API Documentation
 
-> - Version 1.1
+> - Version 1.5.1
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
-> - Dependencies: requests, lxml, bs4, ffmpeg-progress-yield, eaf_base_api
-> - Optional dependency: ffmpeg
+> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
+m3u8, ffmpeg-progress-yield, beautifulsoup4
 
 # WARNING
 > [!WARNING]
@@ -188,7 +188,7 @@ Proxy support is NOT implemented in hqporner_api itself, but in its underlying n
 <br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
 
 # Caching
-All network requests (UTF-8 responses) are cached inside of the base_api.
+All network requests (UTF-8 responses) are cached inside the base_api.
 If you want to configure this behaviour, please see:
 <br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 

@@ -3,4 +3,5 @@ git+https://github.com/EchterAlsFake/hqporner_api
 git+https://github.com/EchterAlsFake/xnxx_api
 git+https://github.com/EchterAlsFake/spankbang_api
 git+https://github.com/EchterAlsFake/sex_api
-git+https://github.com/EchterAlsFake/xvideos_api
+git+https://github.com/EchterAlsFake/eporner_api
+git+https://github.com/EchterAlsFake/missav_api
