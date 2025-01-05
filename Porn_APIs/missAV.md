@@ -1,4 +1,4 @@
-# HQPorner API Documentation
+# missAV API Documentation
 
 > - Version 1.1
 > - Author: Johannes Habel
