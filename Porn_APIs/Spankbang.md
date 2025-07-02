@@ -2,7 +2,7 @@
 
 > - Version 1.3
 > - Author: Johannes Habel
-> - Copyright (C) 2024
+> - Copyright (C) 2024-2025
 > - License: LGPLv3
 > - Dependencies: requests, beautifulsoup (bs4), eaf_base_api, lxml
 > - Optional dependency: ffmpeg

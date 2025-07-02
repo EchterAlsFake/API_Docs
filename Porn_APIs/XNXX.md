@@ -7,6 +7,12 @@
 > - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
 m3u8, ffmpeg-progress-yield, beautifulsoup4
 
+> [!IMPORTANT]
+> Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
+> an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
+
+**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md 
+
 # WARNING
 > [!WARNING]
 > This API is against the Terms of Services of `xnxx.com`. Usage is at your risk.
