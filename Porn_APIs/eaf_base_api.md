@@ -23,6 +23,12 @@ from base_api.base import BaseCore
 
 core = BaseCore()
 core.enable_logging(log_file="some_log_idk.log", level=logging.INFO)
+
+# There is also support for network logging like this:
+core.enable_logging(log_file="buff_x_bow.log", level=logging.INFO, log_ip="target_ip", log_port="target_port")
+# This will send all logs to the given server + port. You need to setup a client that listens for incoming connections.
+# Logs will be sent to an endpoint `/log`, so make sure you have that.
+# Logs will be sent as a JSON object (`"message": message`)
 ```
 
 I may improve logging in the future, as there is still stuff left to do. <
@@ -30,7 +36,9 @@ I may improve logging in the future, as there is still stuff left to do. <
 # Configuration
 
 ```python
-from base_api.modules import config
+from base_api.modules.config import config
+
+config.proxy # access and change values like this
 
 ```
 The following configuration options are available:
