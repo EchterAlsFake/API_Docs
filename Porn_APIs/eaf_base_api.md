@@ -1,49 +1,71 @@
 # Documentation for EAF Base API
+> [!NOTE]
+> This documentation is NOT completed yet.
 
 # Import
 ```python
 from base_api import BaseCore, Callback
-from base_api.modules import consts
+from base_api.modules.config import config
+
+core = BaseCore(config=config) # Use the default config or change the values yourself
+fetched_html = core.fetch("https://buff-x-bow.com/icebow") # Returns UTF-8 decoded HTML
+fetched_response = core.fetch(f"https://buff-x-bow.com/firebow", get_response=True) # Returns httpx Response object
+fetched_bytes = core.fetch(f"https://buff-x-bow.com/huntercr", get_bytes=True) # Returns raw byte data
 ```
+
+# Logging and Debugging
+BaseCore also has its own logging functions that also work EXPLICITLY ON ANDROID!!!. 
+You can enable logging like this:
+
+```python
+import logging
+from base_api.base import BaseCore
+
+core = BaseCore()
+core.enable_logging(log_file="some_log_idk.log", level=logging.INFO)
+```
+
+I may improve logging in the future, as there is still stuff left to do. <
 
 # Configuration
 
 ```python
-from base_api.modules import consts
+from base_api.modules import config
 
 ```
-
 The following configuration options are available:
 
-- consts.REQUEST_DELAY: Defines a delay for each request
-- consts.MAX_RETRIES: Defines the number of retries for one network request, until it's considered as failed
-- consts.TIMEOUT: How long to wait for a response from a website until trying next attempt
-- consts.FFMPEG_PATH: The path to the ffmpeg executable (optional)
-- consts.MAX_CACHE_ITEMS: The maximum number of items being cached. Higher numbers increase RAM usage
-- consts.PROXY: Your Proxy address
-- consts.HEADERS: The website headers (automatically handled per API)
-- consts.USER_AGENTS: a list of User-Agents. Every 3 network request a new User-Agent is applied randomly
+
+- config.request_delay: Defines a delay for each request
+- config.max_retries  : Defines the number of retries for one network request, until it's considered as failed
+- config.timeout: How long to wait for a response from a website until trying next attempt
+- config.ffmpeg_path: The path to the ffmpeg executable (optional)
+- config.max_cache_items : The maximum number of items being cached. Higher numbers increase RAM usage
+- config.proxy : Your Proxy address
+- config.verify_ssl : Whether to verify SSL when doing network requests with a Proxy (Default: True)
+- config.headers : The website headers (automatically handled per API)
+- config.cookies : Additional cookies to pass when doing network requests
+- config.user_agents : a list of User-Agents, automatically cycled after a few network requests
+
+For the default values, have a look in /modules/config.py > `RuntimeConfig` 
 
 # Using Proxies
 
-> [!WARNING]
-> Using proxies, even if they support HTTPS will replace your entire traffic with unencrypted http traffic.
-> Everyone in your local network, as well as the proxy itself may be able to see exactly what you are doing.
-> It is possible to hack your device using Man in the Middle attacks and possibly inject malicious downloads on the fly.
-
-**ONLY USE THIS IF YOU ARE AT HOME AND IT'S YOUR ONLY OPTION**
-
-To use proxies, you need to set the flag `consts.PROXY = ` to a valid proxy address.
+> [!IMPORTANT]
+> If your proxy has problems with SSL and you get certificate warning, you can set `config.verify_ssl = False` to remove that.
+> However, this makes your connection vulnerable to Man in the Middle attack and everyone in your network as well as the proxy
+> can see exactly what you are doing. Only to this for testing purposes or if you are sure about what you do. 
 
 ### Here's a real example:
 
 ```python
 from base_api import BaseCore
-from base_api.modules import consts
+from base_api.modules.config import config
 
 proxy = "http://49.51.244.112:888"
+# Can be SOCKS5 or HTTP / HTTPS
 
-consts.PROXY = proxy
+config.proxy = proxy
 
 
 # Test if proxy works:
@@ -62,3 +84,21 @@ With this configuration, all network traffic will be routed through proxies. If 
 isn't reachable, the API will throw an error and abort the request, so your IP will not be exposed.
 
 However, I do NOT give you a 100% guarantee for that!
+
+
+# Kill Switch (Proxies)
+There is a function that verifies your proxy and aborts the connection when your IP is exposed.
+You can enable it using this way:
+
+```python
+
+from base_api.base import BaseCore
+
+core = BaseCore()
+core.enable_kill_switch() # Enables Kill Switch
+```
+
+This will make a request to httpbin.org to receive your IP with and without Proxy and compare your
+IP addresses. This will run for EVERY SINGLE network request. 
+
+
