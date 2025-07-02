@@ -11,7 +11,7 @@ I will update the documentations and add more things from time to time.
 Maybe when I am in school and a subject unexpectedly got stand out.
 
 > [!NOTE]
-> The `reqs.txt` file has dependencies, but you don't need them.
+> The `requirements.txt` file has dependencies, but you don't need them.
 > It's only for my IDE, so that it doesn't show me thousands of errors
 > in the READMEs. 
 

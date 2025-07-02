@@ -1,17 +1,17 @@
 # Spankbang API Documentation
 
-> - Version 1.0
+> - Version 1.3
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
 > - Dependencies: requests, beautifulsoup (bs4), eaf_base_api, lxml
 > - Optional dependency: ffmpeg
 
-
-
 > [!IMPORTANT]
-> Spankbang API is under being maintained. The documentation is out of date. If you still want to use the package, please install
-> eaf_base_api==1.6.2"
+> Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
+> an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
+
+**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md 
 
 # WARNING
 > [!WARNING]
@@ -41,23 +41,6 @@ Or Install directly from `GitHub`
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
-# Imports
-> [!IMPORTANT]
-> You don't need all of them, but I will list all importable packages, functions and classes
-> here, so that there are no issues in the future. All these extra functions will be described
-> further down!
-
-
-```python
-from spankbang_api.spankbang_api import Client, Search, Quality, Callback, Video, default, threaded, FFMPEG, legacy_download
-from spankbang_api.modules import consts
-from base_api.modules.download import default, threaded, FFMPEG
-from base_api.modules.progress_bars import Callback
-from base_api.modules.quality import Quality
-```
-
-### **In most of the cases you ONLY need the `Client` class.**
-
 > [!NOTE]
 > The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
 > a similar way, which is why I created this package. 
@@ -70,6 +53,21 @@ from base_api.modules.quality import Quality
 ```python
 from spankbang_api import Client
 client = Client()
+
+# If you want to apply a custom configuration for the BaseCore class, here you go:  
+# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+from base_api.modules.config import config
+from base_api.base import BaseCore
+
+# Change the values you like e.g.,
+config.request_delay = 10
+
+# Apply the configuration
+core = BaseCore(config=config)
+core.enable_logging() # .... if you want to enable logging
+core.enable_kill_switch() # ... if you want to enable kill switch
+client = Client(core)
+# New client object with your custom configuration applied
 ```
 
 > [!NOTE]

@@ -1,6 +1,6 @@
 # XNXX API Documentation
 
-> - Version 1.5.1
+> - Version 1.5.5
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
@@ -15,7 +15,6 @@ m3u8, ffmpeg-progress-yield, beautifulsoup4
 
 # Table of Contents
 - [Installation](#installation)
-- [Importing the API](#imports)
 - [Initializing the Client](#client)
 - [The Video object](#get-a-video-object)
     - [Downloading](#download-a-video)
@@ -38,31 +37,26 @@ Or Install directly from `GitHub`
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
-# Imports
-> [!IMPORTANT]
-> You don't need all of them, but I will list all importable packages, functions and classes
-> here, so that there are no issues in the future. All these extra functions will be described
-> further down!
-
-
-```python
-from xnxx_api import Client, Video, errors, search_filters, category 
-from base_api.modules.progress_bars import Callback
-```
-
-### **In most of the cases you ONLY need the `Client` class.**
-
-> [!NOTE]
-> The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
-> a similar way, which is why I created this package. 
-> <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
-
-
 ## Client
 
 ```python
 from xnxx_api import Client
 client = Client()
+
+# If you want to apply a custom configuration for the BaseCore class, here you go:  
+# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+from base_api.modules.config import config
+from base_api.base import BaseCore
+
+# Change the values you like e.g.,
+config.request_delay = 10
+
+# Apply the configuration
+core = BaseCore(config=config)
+core.enable_logging() # .... if you want to enable logging
+core.enable_kill_switch() # ... if you want to enable kill switch
+client = Client(core)
+# New client object with your custom configuration applied
 ```
 
 > [!NOTE]

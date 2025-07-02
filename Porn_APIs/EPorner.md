@@ -1,11 +1,17 @@
 # EPorner Documentation
 
-> - Version 1.8.1
+> - Version 1.8.7
 > - Author: Johannes Habel
-> - Copyright (C) 2024
+> - Copyright (C) 2024-2025
 > - License: LGPLv3
 > - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
 m3u8, ffmpeg-progress-yield, beautifulsoup4
+
+> [!IMPORTANT]
+> Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
+> an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
+
+**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md 
 
 # Important Notice
 The ToS of Eporner.com clearly say that using scrapers / bots isn't allowed.
@@ -51,18 +57,34 @@ Or Install directly from `GitHub`
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
-# Imports
-> [!IMPORTANT]
-> You don't need all of them, but I will list all importable packages, functions and classes
-> here, so that there are no issues in the future. All these extra functions will be described
-> further down!
+# The Client object
+## Client
 
 ```python
-from eporner_api import Client, errors, sorting
+from eporner_api import Client
+client = Client()
+
+# If you want to apply a custom configuration for the BaseCore class, here you go:  
+# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+from base_api.modules.config import config
+from base_api.base import BaseCore
+
+# Change the values you like e.g.,
+config.request_delay = 10
+
+# Apply the configuration
+core = BaseCore(config=config)
+core.enable_logging() # .... if you want to enable logging
+core.enable_kill_switch() # ... if you want to enable kill switch
+client = Client(core)
+# New client object with your custom configuration applied
 ```
 
-# Video Object
+> [!NOTE]
+> The client handles everything, and you should **ALWAYS** import and set it up!
 
+
+# Video Object
 The video object has the following attributes:
 
 ```python
@@ -90,7 +112,6 @@ video.download(quality="best", path="./", mode=Encoding.mp4_h264)
 ### Video Information
 
 > Webmasters
-> - 
 > - Video ID
 > - Tags
 > - Title
@@ -281,11 +302,11 @@ locals.Category.ASMR
 ```
 
 # Proxy Support
-Proxy support is NOT implemented in hqporner_api itself, but in its underlying network component: `eaf_base_api`
+Proxy support is NOT implemented in eporner_api itself, but in its underlying network component: `eaf_base_api`
 <br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
 
 # Caching
-All network requests (UTF-8 responses) are cached inside of the base_api.
+All network requests (UTF-8 responses) are cached inside the base_api.
 If you want to configure this behaviour, please see:
 <br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 

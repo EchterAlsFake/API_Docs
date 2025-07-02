@@ -1,10 +1,16 @@
 # Sex API Documentation
 
-> - Version 1.3.1
+> - Version 1.3.3
 > - Author: Johannes Habel
-> - Copyright (C) 2024
+> - Copyright (C) 2024-2025
 > - License: LGPLv3
 > - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio
+
+> [!IMPORTANT]
+> Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
+> an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
+
+**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 
 # WARNING
 > [!WARNING]
@@ -43,6 +49,21 @@ Or Install directly from `GitHub`
 ```python
 from sex_api import Client
 client = Client()
+
+# If you want to apply a custom configuration for the BaseCore class, here you go:  
+# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+from base_api.modules.config import config
+from base_api.base import BaseCore
+
+# Change the values you like e.g.,
+config.request_delay = 10
+
+# Apply the configuration
+core = BaseCore(config=config)
+core.enable_logging() # .... if you want to enable logging
+core.enable_kill_switch() # ... if you want to enable kill switch
+client = Client(core)
+# New client object with your custom configuration applied
 ```
 
 # The Pin object

@@ -4,13 +4,9 @@
 > Usage of all my APIs is against the ToS of the specific site, if not explicitly told otherwise.
 > Usage is on your risk. I am NOT responsible for any damages caused.
 
-
->[!IMPORTANT]
-> For the site-owners: 
-> 
-> If you specifically have a problem that I've made an API, please reach out to me via E-Mail.
-> Within 24 hours I'll take the repositories down. I don't want to get in trouble.
-
+> [!NOTE]
+> If you own a site or are a legal representative, please reach out to me via E-Mail (EchterAlsFake@proton.me) and I'll
+> take the project offline in less than 24 hours. There's no need for cease and desist or DMCA. 
 
 # Basic Installation and Usage
 

@@ -4,7 +4,7 @@
 
 # Import
 ```python
-from base_api import BaseCore, Callback
+from base_api import BaseCore
 from base_api.modules.config import config
 
 core = BaseCore(config=config) # Use the default config or change the values yourself
@@ -26,7 +26,7 @@ core.enable_logging(log_file="some_log_idk.log", level=logging.INFO)
 
 # There is also support for network logging like this:
 core.enable_logging(log_file="buff_x_bow.log", level=logging.INFO, log_ip="target_ip", log_port="target_port")
-# This will send all logs to the given server + port. You need to setup a client that listens for incoming connections.
+# This will send all logs to the given server + port. You need to set up a client that listens for incoming connections.
 # Logs will be sent to an endpoint `/log`, so make sure you have that.
 # Logs will be sent as a JSON object (`"message": message`)
 ```
@@ -38,8 +38,7 @@ I may improve logging in the future, as there is still stuff left to do. <
 ```python
 from base_api.modules.config import config
 
-config.proxy # access and change values like this
-
+config.proxy  = "socks5://<some_proxy>"# access and change values like this
 ```
 The following configuration options are available:
 
@@ -74,25 +73,16 @@ proxy = "http://49.51.244.112:888"
 # Can be SOCKS5 or HTTP / HTTPS
 
 config.proxy = proxy
-
-
-# Test if proxy works:
-import httpx
-
-client = httpx.Client(proxy=proxy)
-print(client.get("http://httpbin.org/ip").json()["origin"])
-
-# This should print the IP of the proxy
+# This automatically enables the Proxy
 ```
 
 > [!WARNING]
 > If your proxy configuration is invalid, your real IP address will be used for network requests!
+> However, the BaseCore will check your proxy if it has a valid scheme before applying it.
 
 With this configuration, all network traffic will be routed through proxies. If it does not work e.g., because your proxy
-isn't reachable, the API will throw an error and abort the request, so your IP will not be exposed.
-
-However, I do NOT give you a 100% guarantee for that!
-
+isn't reachable, the API will throw an error and abort the request, so your IP will not be exposed, however, I do NOT give you a 
+100% guarantee for that!
 
 # Kill Switch (Proxies)
 There is a function that verifies your proxy and aborts the connection when your IP is exposed.
@@ -108,5 +98,3 @@ core.enable_kill_switch() # Enables Kill Switch
 
 This will make a request to httpbin.org to receive your IP with and without Proxy and compare your
 IP addresses. This will run for EVERY SINGLE network request. 
-
-

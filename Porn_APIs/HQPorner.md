@@ -1,11 +1,17 @@
 # HQPorner API Documentation
 
-> - Version 1.7.1
+> - Version 1.7.4
 > - Author: Johannes Habel
-> - Copyright (C) 2024
+> - Copyright (C) 2024-2025
 > - License: LGPLv3
 > - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
 m3u8, ffmpeg-progress-yield, beautifulsoup4
+
+> [!IMPORTANT]
+> Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
+> an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
+
+**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md 
 
 # WARNING
 > [!WARNING]
@@ -14,7 +20,6 @@ m3u8, ffmpeg-progress-yield, beautifulsoup4
 
 ## Table of Contents
 - [Installation](#installation)
-- [Imports](#imports)
 - [Client](#client)
   - [Video](#get-a-video-object)
   - [Videos by Actress](#get-videos-by-actress)
@@ -29,50 +34,40 @@ m3u8, ffmpeg-progress-yield, beautifulsoup4
 - [Caching](#caching)
 
 # Installation
-
 Installation from `Pypi`:
 
 $ `pip install hqporner_api`
 
 Or Install directly from `GitHub`
 
-`pip install git+https://github.com/EchterAlsFake/hqporner_api`
+$ `pip install git+https://github.com/EchterAlsFake/hqporner_api`
 
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
-# Imports
-> [!IMPORTANT]
-> You don't need all of them, but I will list all importable packages, functions and classes
-> here, so that there are no issues in the future. All these extra functions will be described
-> further down!
-
-
-```python
-from hqporner_api import Client, Video
-from hqporner_api.modules.errors import (InvalidURL, InvalidActress, InvalidCategory, WeirdError,
-                                         NoVideosFound, NotAvailable)
-from hqporner_api.modules.locals import Sort, Category
-from base_api.modules.progress_bars import Callback
-```
-
-### **In most of the cases you ONLY need the `Client` class.**
-
-> [!NOTE]
-> The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
-> a similar way, which is why I created this package. 
-> <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
 
 ## Client
 
 ```python
 from hqporner_api import Client
 client = Client()
-```
 
-> [!NOTE]
-> The client handles everything, and you should **ALWAYS** import and set it up!
+# If you want to apply a custom configuration for the BaseCore class, here you go:  
+# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+from base_api.modules.config import config
+from base_api.base import BaseCore
+
+# Change the values you like e.g.,
+config.request_delay = 10
+
+# Apply the configuration
+core = BaseCore(config=config)
+core.enable_logging() # .... if you want to enable logging
+core.enable_kill_switch() # ... if you want to enable kill switch
+client = Client(core)
+# New client object with your custom configuration applied
+```
 
 ### Get a video object
 
@@ -84,7 +79,6 @@ video = Client().get_video(url="<video_url>")
 <details>
   <summary>All Video attributes</summary>
 
-  
   | Attribute             | Returns | is cached? |
   |:----------------------|:-------:|:----------:|
   | .title                |   str   |    Yes     |
@@ -102,11 +96,9 @@ video = Client().get_video(url="<video_url>")
   <br>The list contains 11 items. The first one is the thumbnail, and the 10 others
   <br>are the thumbnails you see when you hover of the video.
 
-
 </details>
 
 ### Download a video
-
 
 ```python
 from hqporner_api import Client
