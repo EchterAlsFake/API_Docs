@@ -1,6 +1,6 @@
 # xvideos API Documentation
 
-> - Version 1.5.6
+> - Version 1.5.8
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
@@ -80,23 +80,23 @@ video = Client().get_video(url="<video_url>")
 <details>
   <summary>All Video attributes</summary>
   
-  | Attribute      | Returns | is cached? |
-  |:---------------|:-------:|:----------:|
-  | .title         |   str   |    Yes     |
-  | .author        |   str   |    Yes     |
-  | .length        |   str   |    Yes     |
-  | .views         |   str   |    Yes     |
-  | .comment_count |   str   |    Yes     |
-  | .likes         |   str   |    Yes     |
-  | .dislikes      |   str   |    Yes     |
-  | .rating_votes  |   str   |    Yes     |
-  | .pornstars     |  list   |    Yes     |
-  | .description   |   str   |    Yes     |
-  | .tags          |  list   |    Yes     |
-  | .thumbnail_url |  list   |    Yes     |
-  | .publish_date  |   str   |    Yes     |
-  | .content_url   |   str   |    Yes     |
-  | .embed_url     |   str   |    Yes     |
+  | Attribute      |  Returns  | is cached? |
+  |:---------------|:---------:|:----------:|
+  | .title         |    str    |    Yes     |
+  | .author        | Generator |    Yes     |
+  | .length        |    str    |    Yes     |
+  | .views         |    str    |    Yes     |
+  | .comment_count |    str    |    Yes     |
+  | .likes         |    str    |    Yes     |
+  | .dislikes      |    str    |    Yes     |
+  | .rating_votes  |    str    |    Yes     |
+  | .pornstars     | Generator |    Yes     |
+  | .description   |    str    |    Yes     |
+  | .tags          |   list    |    Yes     |
+  | .thumbnail_url |   list    |    Yes     |
+  | .publish_date  |    str    |    Yes     |
+  | .content_url   |    str    |    Yes     |
+  | .embed_url     |    str    |    Yes     |
 
 </details>
 
@@ -130,6 +130,7 @@ def custom_callback(downloaded, total):
 
 
 # The Pornstar Object
+
 ```python
 from xvideos_api import Client
 
@@ -139,15 +140,77 @@ pornstar = client.get_pornstar("<pornstar_url>")
 videos = pornstar.videos
 for video in videos:
   print(video.title)
-
-
-# Other stuff:
-
-total_pages = pornstar.total_pages
-total_videos = pornstar.total_videos
-
-# I won't implement the user tab. If you really need it, open an Issue about it.
 ```
+
+
+> [!NOTE]
+> Not all attributes are always available. If an attribute is not available, an `AttributeError` will be raised.
+> If I forgot any attributes from the #about_me Tab, please open an issue about it.
+
+<details>
+  <summary>All Pornstar attributes</summary>
+  
+  | Attribute           |  Returns  | is cached? |
+  |:--------------------|:---------:|:----------:|
+  | .name               |    str    |    Yes     |
+  | .worked_for_with    | Generator |    Yes     |
+  | .thumbnail_url      |    str    |    Yes     |
+  | .total_videos       |    str    |    Yes     |
+  | .per_page           |    str    |    Yes     |
+  | .total_pages        |    str    |    Yes     |
+  | .videos             | Generator |    Yes     |
+  | .gender             |    str    |    Yes     |
+  | .age                |    str    |    Yes     |
+  | .country            |    str    |    Yes     |
+  | .profile_hits       |    str    |    Yes     |
+  | .subscriber_count   |    str    |    Yes     |
+  | .total_videos_views |    str    |    Yes     |
+  | .sign_up_date       |    str    |    Yes     |
+  | .last_activity      |    str    |    Yes     |
+  | .video_tags         |   list    |    Yes     |
+
+</details>
+
+# The Channel object
+
+> [!NOTE]
+> Not all attributes are always available. If an attribute is not available, an `AttributeError` will be raised.
+> If I forgot any attributes from the #about_me Tab, please open an issue about it.
+
+```python
+from xvideos_api import Client
+
+client = Client()
+channel = client.get_channel("<channel_url>")
+
+videos = channel.videos
+for video in videos:
+  print(video.title)
+
+```
+<details>
+  <summary>All Channel attributes</summary>
+  
+  | Attribute          |  Returns  | is cached? |
+  |:-------------------|:---------:|:----------:|
+  | .name              |    str    |    Yes     |
+  | .worked_for_with   | Generator |    Yes     |
+  | .thumbnail_url     |    str    |    Yes     |
+  | .total_videos      |    str    |    Yes     |
+  | .per_page          |    str    |    Yes     |
+  | .total_pages       |    str    |    Yes     |
+  | .videos            | Generator |    Yes     |
+  | .country           |    str    |    Yes     |
+  | .profile_hits      |    str    |    Yes     |
+  | .subscribes        |    str    |    Yes     |
+  | .total_video_views |    str    |    Yes     |
+  | .signed_up         |    str    |    Yes     |
+  | .last_activity     |    str    |    Yes     |
+  | .video_tags        |   list    |    Yes     |
+  | .region            |    str    |    Yes     |
+
+</details>
+
 
 # Searching
 
@@ -172,8 +235,8 @@ from xvideos_api import sorting
 from xvideos_api.xvideos_api import Client
 
 client = Client()
-videos = Client.search("Mia Khalifa", sorting_Date=sorting.SortDate.Sort_all, sort_Quality=sorting.SortQuality.Sort_720p,
-                        sorting_Sort=sorting.Sort.Sort_relevance, sorting_Time=sorting.SortVideoTime.Sort_short)
+videos = client.search(query="Mia Khalifa", pages=5, sorting_date=sorting.SortDate.Sort_all, sort_quality=sorting.SortQuality.Sort_720p,
+                        sorting_sort=sorting.Sort.Sort_relevance, sorting_time=sorting.SortVideoTime.Sort_short)
 
 # If you don't specify filters,  defaults from xvideos.com will be used!
 ```
