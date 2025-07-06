@@ -138,7 +138,7 @@ If you need additional information on how the quality argument works, have a loo
 ```python
 from hqporner_api import Client
 
-actress_object = Client().get_videos_by_actress("<actress-name>") # or URL
+actress_object = Client().get_videos_by_actress("<actress-name>", pages=5) # or URL
 # You can also enter an actress URl e.g., hqporner.com/actress/...
 
 # You can now iterate through all videos from an actress:
@@ -154,7 +154,7 @@ for video in actress_object:
 ```python
 from hqporner_api import Client
 from hqporner_api import Category
-videos = Client().get_videos_by_category(Category.POV) # example category 
+videos = Client().get_videos_by_category(Category.POV, pages=5) # example category 
 
 for video in videos:
     print(video.title)
@@ -173,7 +173,7 @@ The Category can also be a string. e.g Category.BIG_TITS would be equivalent to 
 
 ```python
 from hqporner_api.api import Client
-videos = Client().search_videos(query="Search Query")
+videos = Client().search_videos(query="Search Query", pages=5)
 
 for video in videos:
     print(video.title)
@@ -184,7 +184,7 @@ for video in videos:
 ```python
 from hqporner_api import Client
 from hqporner_api import Sort
-top_porn = Client().get_top_porn(sort_by=Sort.WEEK) # example sorting 
+top_porn = Client().get_top_porn(sort_by=Sort.WEEK, pages=5) # example sorting 
 
 """
 Sort:
@@ -211,7 +211,7 @@ random_video = Client().get_random_video() # Returns a random video object
 ### Get brazzers videos
 ```python
 from hqporner_api.api import Client
-brazzers_videos = Client().get_brazzers_videos() # Returns brazzers videos (generator)
+brazzers_videos = Client().get_brazzers_videos(pages=5) # Returns brazzers videos (generator)
 ```
 
 # Proxy Support
@@ -227,6 +227,10 @@ There are three exceptions:
 | InvalidCategory | Raised when a category is invalid                |
 | NoVideosFound   | Raised when no videos were found during a search |
 | InvalidActress  | Raised when an invalid actress was given         |
+| InvalidURL      | Raised when an invalid Video URL is entered      |    
+| NotAvailable    | Raised when a video is not available             |
+| WeirdError      | I don't know why this happens                    |
+| ThumbnailError  | Raised when a thumbnail can't be fetched. Report!|
 
 # Caching
 All network requests (UTF-8 responses) are cached inside the base_api.

@@ -2,6 +2,15 @@
 > [!NOTE]
 > This documentation is NOT completed yet.
 
+# Table of Contents
+- [Importing](#import)
+- [Logging and Debugging](#logging-and-debugging)
+- [Configuration](#configuration)
+- [Using Proxies](#using-proxies)
+- [Kill Switch](#kill-switch-proxies)
+- [Errors / Exceptions]()
+
+
 # Import
 ```python
 from base_api import BaseCore
@@ -98,3 +107,20 @@ core.enable_kill_switch() # Enables Kill Switch
 
 This will make a request to httpbin.org to receive your IP with and without Proxy and compare your
 IP addresses. This will run for EVERY SINGLE network request. 
+
+
+# Errors / Exceptions
+This API package has a few custom exception for the networking stuff, that CAN be really important, but that depends on
+your use case. However, here's a quick documentation:
+
+| Exception             | Description                                                                                                                                       |
+| --------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`KillSwitch`**      | Raised when the Kill Switch is triggered due to an IP leak.                                                                                       |
+| **`InvalidProxy`**    | Raised when the proxy is invalid or fails during an `httpx` request.                                                                              |
+| **`UnknownError`**    | Raised by a general `except Exception` block. These should be reported via [GitHub Issues](https://github.com/EchterAlsFake/eaf_base_api/issues). |
+| **`SegmentError`**    | Raised when an error occurs while processing a segment during video download.                                                                     |
+| **`NetworkingError`** | General networking error, usually caused by issues on your site. If you're sure it's not, [report it](https://github.com/EchterAlsFake/eaf_base_api/issues).                              |
+
+
+
+
