@@ -19,10 +19,10 @@ Maybe when I am in school and a subject unexpectedly got stand out.
 # Documentation -> Projects
 
 ### Main Projects
-- [Porn Fetch]()
+- [Porn Fetch](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_Fetch.md)
 
 ### APIs
-- [PHUB](https://phub.readthedocs.io/)
+- [PHUB](ttps://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/PHUB.md)
 - [HQPorner API](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/HQPorner.md)
 - [xvideos API](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/XVideos.md)
 - [XNXX API](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/XNXX.md)

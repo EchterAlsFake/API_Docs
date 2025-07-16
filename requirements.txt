@@ -5,3 +5,4 @@ git+https://github.com/EchterAlsFake/spankbang_api
 git+https://github.com/EchterAlsFake/sex_api
 git+https://github.com/EchterAlsFake/eporner_api
 git+https://github.com/EchterAlsFake/missav_api
+git+https://github.com/EchterAlsFake/PHUB
