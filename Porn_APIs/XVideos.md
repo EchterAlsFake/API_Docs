@@ -247,7 +247,7 @@ videos = client.search(query="Mia Khalifa", pages=5, sorting_date=sorting.SortDa
 - SortVideoTime: Sorts videos by their length
 
 # Proxy Support
-Proxy support is NOT implemented in hqporner_api itself, but in its underlying network component: `eaf_base_api`
+Proxy support is NOT implemented in xvideos_api itself, but in its underlying network component: `eaf_base_api`
 <br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
 
 # Caching
