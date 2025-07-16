@@ -1,6 +1,6 @@
 # PHUB Documentation
 
-> - Version 4.8.7
+> - Version 4.7.8
 > - Author: [Johannes Habel](https://github.com/echteralsfake/), [Egsagon](https://github.com/Egsagon)
 > - Copyright (C) 2024-2025
 > - License: GPLv3
