@@ -1,6 +1,6 @@
 # EPorner Documentation
 
-> - Version 1.8.7
+> - Version 1.8.8
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3

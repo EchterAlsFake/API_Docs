@@ -1,11 +1,12 @@
 # XNXX API Documentation
 
-> - Version 1.5.5
+> - Version 1.5.6
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
 > - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
-m3u8, ffmpeg-progress-yield, beautifulsoup4
+m3u8, beautifulsoup4
+> - Optional: av, ffmpeg-progress-yield
 
 > [!IMPORTANT]
 > Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
@@ -128,6 +129,32 @@ def custom_callback(downloaded, total):
 
 > [!NOTE]
 > For more information on the `quality` and `downloader` values See [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
+
+
+### Remuxing Videos (important)
+Videos will by default be saved in MPEG-TS format, because that is
+what the website gives us. However, this may cause problems when playing
+with older video players, AND you can also not tag metadata to the 
+files, because they miss a proper container.
+
+This can be fixed using remuxing the video. This only takes a few seconds
+and there's no quality loss. However, you need to install `av` for that.
+
+`pip installl av` # Which will also install FFmpeg bundles binaries
+
+```python
+from api_example import Client
+
+video = Client().get("url")
+video.download(quality="best", downloader="threaded", callback=Callback_function_here, path="./", 
+               remux=True, callback_remux=CallBackFunctionHere)
+
+# The remux mode has its own callback function which works the same as the above example,
+# taking pos and total as an input, however you might not really see progress, because
+# it's very fucking fast.
+```
+
+
 
 # Searching
 ```python

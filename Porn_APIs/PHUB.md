@@ -180,6 +180,31 @@ client.get("some_video_idk").download(path="./", display=Callback.animated_text_
 
 This example can of course be easily extended with tqdm, rich or anything else.
 
+
+### Remuxing Videos (important)
+Videos will by default be saved in MPEG-TS format, because that is
+what the website gives us. However, this may cause problems when playing
+with older video players, AND you can also not tag metadata to the 
+files, because they miss a proper container.
+
+This can be fixed using remuxing the video. This only takes a few seconds
+and there's no quality loss. However, you need to install `av` for that.
+
+`pip installl av` # Which will also install FFmpeg bundles binaries
+
+```python
+from api_example import Client
+
+video = Client().get("url")
+video.download(quality="best", downloader="threaded", callback=Callback_function_here, path="./", 
+               remux=True, callback_remux=CallBackFunctionHere)
+
+# The remux mode has its own callback function which works the same as the above example,
+# taking pos and total as an input, however you might not really see progress, because
+# it's very fucking fast.
+```
+
+
 ### Video Attributes
 You can of course get a lot of information from each video. Basically everything you can see on
 a PornHub Video when you watch it through the website.
