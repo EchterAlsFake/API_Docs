@@ -55,6 +55,7 @@ The following configuration options are available:
 - config.request_delay: Defines a delay for each request
 - config.max_retries  : Defines the number of retries for one network request, until it's considered as failed
 - config.timeout: How long to wait for a response from a website until trying next attempt
+- config.max_bandwidth_mb: A speed limit for network requests. For downloading this only works in default mode!
 - config.ffmpeg_path: The path to the ffmpeg executable (optional)
 - config.max_cache_items : The maximum number of items being cached. Higher numbers increase RAM usage
 - config.proxy : Your Proxy address
