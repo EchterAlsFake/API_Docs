@@ -1,11 +1,11 @@
 # Spankbang API Documentation
 
-> - Version 1.3
+> - Version 1.4
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
 > - Dependencies: requests, beautifulsoup (bs4), eaf_base_api, lxml
-> - Optional dependency: ffmpeg
+> - Optional dependency: ffmpeg-progress-yield av
 
 > [!IMPORTANT]
 > Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
@@ -103,10 +103,10 @@ video = Client().get_video(url="<video_url>")
 
 
 ```python
-from spankbang_api import Client, Quality
+from spankbang_api import Client
 client = Client()
 video = client.get_video("<video_url>")
-quality = Quality.BEST # Best quality as an example
+quality = "best" # Best quality as an example
 
 video.download(quality=quality, path="your_path_here")
 # Custom Callback
@@ -121,8 +121,8 @@ def custom_callback(downloaded, total):
 ```
 
 Arguments:
-- quality: Can be a Quality object or a string: ("best", "half", "worst")
-- downloader: Can be a downloader object or a string: ("threaded", "FFMPEG", "default")
+- quality: string: ("best", "half", "worst")
+- downloader: string: ("threaded", "FFMPEG", "default")
 
 The Downloader defines which method will be used to fetch the segments. FFMPEG is the most stable one, but not as fast
 as the threaded one, and it needs FFMPEG installed on your system. The "default" will fetch one segment by one, which is
@@ -133,18 +133,27 @@ to include the title by yourself into the output path and additionally the file 
 
 - use_hls: `True` or `False` whether to use segment downloading or raw file downloading. Raw file downloading is the easiest one,
 but if you use this you circumvent spankbang's login system, so might not be the best -_-, but hey I don't care ;) 
- 
-## Quality
 
-The quality class is used for video downloading. It has three attributes:
 
-- Quality.BEST (representing the best quality)
-- Quality.HALF (representing something in the middle)
-- Quality.WORST (representing the worst quality)
+### Remuxing Videos (important)
+Videos will by default be saved in MPEG-TS format, because that is
+what the website gives us. However, this may cause problems when playing
+with older video players, AND you can also not tag metadata to the 
+files, because they miss a proper container.
 
-! This can also be a string instead of the object like:
+This can be fixed using remuxing the video. This only takes a few seconds
+and there's no quality loss. However, you need to install `av` for that.
 
-- Quality.BEST == `best`
-- Quality.HALF == `half`
-- Quality.WORST == `worst`
+`pip installl av` # Which will also install FFmpeg bundles binaries
 
+```python
+from api_example import Client
+
+video = Client().get("url")
+video.download(quality="best", downloader="threaded", callback=Callback_function_here, path="./", 
+               remux=True, callback_remux=CallBackFunctionHere)
+
+# The remux mode has its own callback function which works the same as the above example,
+# taking pos and total as an input, however you might not really see progress, because
+# it's very fucking fast.
+```
