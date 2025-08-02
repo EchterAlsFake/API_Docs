@@ -83,6 +83,8 @@ proxy = "http://49.51.244.112:888"
 # Can be SOCKS5 or HTTP / HTTPS
 
 config.proxy = proxy
+core = BaseCore(config=config, auto_init=False)
+core.initialize_session()
 # This automatically enables the Proxy
 ```
 
