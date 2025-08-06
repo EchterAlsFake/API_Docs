@@ -51,7 +51,6 @@ config.proxy  = "socks5://<some_proxy>"# access and change values like this
 ```
 The following configuration options are available:
 
-
 - config.request_delay: Defines a delay for each request
 - config.max_retries  : Defines the number of retries for one network request, until it's considered as failed
 - config.timeout: How long to wait for a response from a website until trying next attempt
@@ -60,9 +59,6 @@ The following configuration options are available:
 - config.max_cache_items : The maximum number of items being cached. Higher numbers increase RAM usage
 - config.proxy : Your Proxy address
 - config.verify_ssl : Whether to verify SSL when doing network requests with a Proxy (Default: True)
-- config.headers : The website headers (automatically handled per API)
-- config.cookies : Additional cookies to pass when doing network requests
-- config.user_agents : a list of User-Agents, automatically cycled after a few network requests
 
 For the default values, have a look in /modules/config.py > `RuntimeConfig` 
 
@@ -116,14 +112,14 @@ IP addresses. This will run for EVERY SINGLE network request.
 This API package has a few custom exception for the networking stuff, that CAN be really important, but that depends on
 your use case. However, here's a quick documentation:
 
-| Exception            | Description                                                                                                                                                  |
-|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`KillSwitch`**     | Raised when the Kill Switch is triggered due to an IP leak.                                                                                                  |
-| **`InvalidProxy`**   | Raised when the proxy is invalid or fails during an `httpx` request.                                                                                         |
-| **`UnknownError`**   | Raised by a general `except Exception` block. These should be reported via [GitHub Issues](https://github.com/EchterAlsFake/eaf_base_api/issues).            |
-| **`SegmentError`**   | Raised when an error occurs while processing a segment during video download.                                                                                |
-| **`NetworkingError`**| General networking error, usually caused by issues on your site. If you're sure it's not, [report it](https://github.com/EchterAlsFake/eaf_base_api/issues). |
-| **`ProxySSLError`**  | Raised when an invalid SSL certificate is used by the proxy server                                                                                           |
-
+| Exception             | Description                                                                                                                                                  |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`KillSwitch`**      | Raised when the Kill Switch is triggered due to an IP leak.                                                                                                  |
+| **`InvalidProxy`**    | Raised when the proxy is invalid or fails during an `httpx` request.                                                                                         |
+| **`UnknownError`**    | Raised by a general `except Exception` block. These should be reported via [GitHub Issues](https://github.com/EchterAlsFake/eaf_base_api/issues).            |
+| **`SegmentError`**    | Raised when an error occurs while processing a segment during video download.                                                                                |
+| **`NetworkingError`** | General networking error, usually caused by issues on your site. If you're sure it's not, [report it](https://github.com/EchterAlsFake/eaf_base_api/issues). |
+| **`ProxySSLError`**   | Raised when an invalid SSL certificate is used by the proxy server                                                                                           |
+| **`ResouceGone`**     | When trying to access a resource that doesn't exist anymore                                                                                                  |
 
 
