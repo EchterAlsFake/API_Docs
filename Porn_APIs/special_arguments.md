@@ -1,29 +1,28 @@
 # Quality
 
-Before base_api v2 the quality argument was handled with a `Quality` object which has three parameters:
+Since **base_api v2**, pass `quality` as a simple argument (no enum). Supports **labels** and **numeric targets**.
 
-- Quality.BEST
-- Quality.HALF
-- Quality.WORST
+## Accepted values
+- `"best"` – highest available.
+- `"half"` – middle option after sorting by height.
+- `"worst"` – lowest available.
+- `1080`, `"1080"`, `"1080p"`, `720`, etc. – target video height.
 
-However, since v2 I removed this. You can now give the quality entirely (and only) as a string:
+## Numeric selection (short)
+1. Prefer the **highest height ≤ target** (e.g., target 720 with 1080/720/480 → **720**).
+2. If none ≤ target, pick the **closest by absolute difference**; on ties choose the **higher**.
+3. If multiple variants share the chosen height, prefer **higher bandwidth**, then **higher frame rate**.
+4. Missing `resolution` → try to infer from URI (e.g., `.../720p/...`); else fall back to **bandwidth** ordering.
+5. Audio-only and I-frame playlists are **ignored**.
 
-`best`:
+## Works for both HLS and direct-download
+The same rules apply when selecting HLS variants or matching CDN links.
 
-This refers to the best video quality possible. The base api has an algorithm to fetch all available qualities from a 
-stream and get the best quality from it. I know that some people might want to use more specific or more individual 
-qualities. However, I made all my APIs only for the Porn Fetch project, and I would need to include all qualities from 144p to 4K
-and some sites implement all that differently. It would be a lot of code and brain-cells, and I don't want to do that. 
-
-`half`:
-
-This refers to the middle best quality. If four qualities are there, e.g., 144p,240p,360p,720p the algorithm will prefer 360p
-over 240p.
-
-`worst`
-
-This refers to the worst possible quality.
-
+## Examples
+- `quality="best"` → highest (e.g., 1080p over 720p).
+- `quality="half"` → for `[144, 240, 360, 720]` chooses **360**.
+- `quality="worst"` → lowest (e.g., 144p).
+- `quality=480` → **480** if present, else highest below (e.g., 360). If only above exist (e.g., 720/1080), pick the **closest** (→ 720).
 
 # Downloader (threading mode)
 

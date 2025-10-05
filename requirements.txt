@@ -6,3 +6,5 @@ git+https://github.com/EchterAlsFake/sex_api
 git+https://github.com/EchterAlsFake/eporner_api
 git+https://github.com/EchterAlsFake/missav_api
 git+https://github.com/EchterAlsFake/PHUB
+git+https://github.com/EchterAlsFake/xhamster_api
+git+https://github.com/EchterAlsFake/eaf_base_api

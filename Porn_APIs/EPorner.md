@@ -164,7 +164,7 @@ def custom_callback(downloaded, total):
 | no_title | The title will not be included into the path | `True` `False`                          |
 
 > [!NOTE]
-> For more information on the `quality` svalue See [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
+> For more information on the `quality` values, see [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
 
 
 ## The Pornstar Object
