@@ -1,6 +1,6 @@
 # missAV API Documentation
 
-> - Version 1.4.3
+> - Version 1.4.5
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
@@ -22,7 +22,7 @@
 - [Client](#client)
   - [Video](#get-a-video-object)
   - [Download a video](#download-a-video)
-
+- [Searching](#searching)
 - [Proxy Support](#proxy-support)
 - [Caching](#caching)
 
@@ -130,6 +130,22 @@ video.download(quality="best", downloader="threaded", callback=Callback_function
 # it's very fucking fast.
 ```
 
+# Searching
+> [!NOTE]
+> Searching uses Missav's API and not webscraping!
+
+```python
+from missav_api import Client
+client = Client()
+video_results = client.search(query="<your_search_query>", video_count=50, max_workers=20)
+
+for video in video_results:
+    print(video.title)
+```
+
+- `query`: The search term to use 
+- `video_count`: The amount of videos to fetch
+- `max_workers`: The amount of workers for scraping the video objects after we got the API data
 
 # Proxy Support
 Proxy support is NOT implemented in hqporner_api itself, but in its underlying network component: `eaf_base_api`
