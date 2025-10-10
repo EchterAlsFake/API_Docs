@@ -1,6 +1,6 @@
 # Spankbang API Documentation
 
-> - Version 1.4
+> - Version 1.6
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
@@ -24,6 +24,7 @@
 - [Client](#client)
   - [Video](#get-a-video-object)
   - [Download videos](#download-a-video)
+- [Searching](#searching)
 
 # Installation
 
@@ -86,13 +87,11 @@ video = Client().get_video(url="<video_url>")
     | .title                |   str    |    Yes     |
     | .author               |   str    |    Yes     |
     | .length               |   str    |    Yes     |
-    | .publish_date         |   str    |    Yes     |
     | .tags                 |   list   |    Yes     |
     | .video_qualities      |   list   |    Yes     |
     | .direct_download_urls |   list   |    Yes     |
     | .thumbnail            |   str    |    Yes     |
     | .description          |   str    |    Yes     |
-    | .embed_url            |   str    |    Yes     | 
     | .rating               | str (%)  |    Yes     |
 
 </details>
@@ -155,3 +154,32 @@ video.download(quality="best", downloader="threaded", callback=Callback_function
 # taking pos and total as an input, however you might not really see progress, because
 # it's very fucking fast.
 ```
+
+
+# Searching
+You can search for videos on Spankbang and receive the results directly as a Video object.
+
+```python
+from spankbang_api import Client
+
+client = Client()
+search_results = client.search(query="<your search query>",
+                               filter="<your_filter",
+                               duration="<duration>",
+                               date="<date>",
+                               max_workers="<max_workers>",
+                               pages="<pages>",
+                               quality="<video_quality>"
+                               )
+```
+
+Arguments:
+
+- `query`: The search query you want to search for
+- `filter`: Can be: `trending`, `new`, `featured`, `popular`
+- `quality`: Can be: `hd`, `fhd`, `uhd`
+- `duration`: Can be: `10`, `20`, `40`
+- `date`: Can be: `d`, `w`, `m`, `y`
+- `pages`: How many pages to fetch
+- `max_workers`: How many threads to use for fetching video objects from each page
+
