@@ -1,6 +1,6 @@
 # xvideos API Documentation
 
-> - Version 1.5.9
+> - Version 1.6.7
 > - Author: Johannes Habel
 > - Copyright (C) 2024-2025
 > - License: LGPLv3
@@ -29,6 +29,7 @@ m3u8, beautifulsoup4
 - [Searching Videos](#searching)
     - [Basic Search](#basic-search)
     - [Using Filters](#using-filters)
+- [Playlist](#playlist)
 - [Proxy Support](#proxy-support)
 - [Caching](#caching)
 
@@ -270,6 +271,21 @@ videos = client.search(query="Mia Khalifa", pages=5, sorting_date=sorting.SortDa
 - SortQuality: Sorts videos by their quality
 - SortDate: Sorts videos by upload date
 - SortVideoTime: Sorts videos by their length
+
+# Playlist
+You can also fetch Playlists, however, they need to be public!
+
+```python
+from xvideos_api import Client
+
+client = Client()
+playlist = client.get_playlist(url="playlist_url", max_workers=20, pages=2)
+for video in playlist:
+    print(video.title)
+```
+
+Pretty simple I guess :) 
+
 
 # Proxy Support
 Proxy support is NOT implemented in xvideos_api itself, but in its underlying network component: `eaf_base_api`
