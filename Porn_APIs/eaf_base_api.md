@@ -9,6 +9,8 @@
 - [Using Proxies](#using-proxies)
 - [Kill Switch](#kill-switch-proxies)
 - [Errors / Exceptions]()
+- [HTTP2 Support](#http2)
+- [User Agent cycling](#useragent-cycling)
 
 
 # Import
@@ -47,6 +49,7 @@ I may improve logging in the future, as there is still stuff left to do. <
 ```python
 from base_api.modules.config import config
 
+
 config.proxy  = "socks5://<some_proxy>"# access and change values like this
 ```
 The following configuration options are available:
@@ -59,6 +62,7 @@ The following configuration options are available:
 - config.max_cache_items : The maximum number of items being cached. Higher numbers increase RAM usage
 - config.proxy : Your Proxy address
 - config.verify_ssl : Whether to verify SSL when doing network requests with a Proxy (Default: True)
+- config.use_http2: Whether to enable http2 support (enabled by default)
 
 For the default values, have a look in /modules/config.py > `RuntimeConfig` 
 
@@ -79,7 +83,7 @@ proxy = "http://49.51.244.112:888"
 # Can be SOCKS5 or HTTP / HTTPS
 
 config.proxy = proxy
-core = BaseCore(config=config, auto_init=False)
+core = BaseCore(config=config)
 core.initialize_session()
 # This automatically enables the Proxy
 ```
@@ -122,4 +126,18 @@ your use case. However, here's a quick documentation:
 | **`ProxySSLError`**   | Raised when an invalid SSL certificate is used by the proxy server                                                                                           |
 | **`ResouceGone`**     | When trying to access a resource that doesn't exist anymore                                                                                                  |
 
+# Http2 support
+All network requests through the `.fetch` method will use http2 by default.
+If this is supported depends on the website. Some websites e.g., spankbang or missav don't 
+support HTTP2 and thus giving a `403` error each time. The APIs for such websites
+have http2 disabled by default.
 
+If you want to disable http2 yourself, you can do so by setting `enable_http2 = False` in the [Configuration](#configuration).
+After that, you **NEED*** to reload the session e.g., call `core.initialize_session()`.
+
+
+# User Agent cycling
+In the current release, eaf_base_api will try to change the user agent if a error
+in the range between 500 and 600 e.g., `503` or `500` occurs. For this feature
+to work, you need to also install `fake_useragent` via `pip install fake_useragent`.
+Otherwise, it won't be cycled. This is OPTIONAL. 
