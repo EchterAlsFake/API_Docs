@@ -9,8 +9,8 @@
 - [Using Proxies](#using-proxies)
 - [Kill Switch](#kill-switch-proxies)
 - [Errors / Exceptions]()
-- [HTTP2 Support](#http2)
-- [User Agent cycling](#useragent-cycling)
+- [HTTP2 Support](#http2-support)
+- [User Agent cycling](#user-agent-cycling)
 
 
 # Import
@@ -49,7 +49,6 @@ I may improve logging in the future, as there is still stuff left to do. <
 ```python
 from base_api.modules.config import config
 
-
 config.proxy  = "socks5://<some_proxy>"# access and change values like this
 ```
 The following configuration options are available:
@@ -63,11 +62,13 @@ The following configuration options are available:
 - config.proxy : Your Proxy address
 - config.verify_ssl : Whether to verify SSL when doing network requests with a Proxy (Default: True)
 - config.use_http2: Whether to enable http2 support (enabled by default)
+- config.max_workers_download: How many workers to use for fetching segments in the threaded download mode
+- config.videos_concurrency: How many videos to fetch at the same time (Higher values can result in 429)
+- config.pages_concurrency: How many pages to fetch at the same time (Higher values can result in 429)
 
 For the default values, have a look in /modules/config.py > `RuntimeConfig` 
 
 # Using Proxies
-
 > [!IMPORTANT]
 > If your proxy has problems with SSL and you get certificate warning, you can set `config.verify_ssl = False` to remove that.
 > However, this makes your connection vulnerable to Man in the Middle attack and everyone in your network as well as the proxy
