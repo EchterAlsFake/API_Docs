@@ -1,0 +1,19 @@
+[project]
+name = "api-docs"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "xvideos_api@git+https://github.com/EchterAlsFake/xvideos_api",
+    "hqporner_api@git+https://github.com/EchterAlsFake/hqporner_api",
+    "xnxx_api@git+https://github.com/EchterAlsFake/xnxx_api",
+    "spankbang_api@git+https://github.com/EchterAlsFake/spankbang_api",
+    "sex_api@git+https://github.com/EchterAlsFake/sex_api",
+    "eporner_api@git+https://github.com/EchterAlsFake/eporner_api",
+    "missav_api@git+https://github.com/EchterAlsFake/missav_api",
+    "PHUB@git+https://github.com/EchterAlsFake/PHUB",
+    "xhamster_api@git+https://github.com/EchterAlsFake/xhamster_api",
+    "eaf_base_api@git+https://github.com/EchterAlsFake/eaf_base_api",
+    "xfreehd_api@git+https://github.com/EchterAlsFake/xfreehd_api",
+]

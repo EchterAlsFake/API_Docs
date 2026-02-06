@@ -1,11 +1,14 @@
 # HQPorner API Documentation
 
-> - Version 1.7.4
-> - Author: Johannes Habel
-> - Copyright (C) 2024-2025
-> - License: LGPLv3
-> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
-m3u8, ffmpeg-progress-yield, beautifulsoup4
+> - Name: hqporner_api
+> - Version: 2.0
+> - Description: A Python API for the Porn Site HQPorner.com
+> - Requires Python: >=3.9
+> - License: LGPL-3.0-only
+> - Author: Johannes Habel (EchterAlsFake@proton.me)
+> - Dependencies: bs4, eaf_base_api
+> - Optional dependencies: full = lxml, httpx[http2], httpx[socks]
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
 > Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
@@ -41,6 +44,9 @@ $ `pip install hqporner_api`
 Or Install directly from `GitHub`
 
 $ `pip install git+https://github.com/EchterAlsFake/hqporner_api`
+
+Optional extras (faster parsing + extra httpx features):
+`pip install hqporner_api[full]`
 
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
@@ -79,16 +85,16 @@ video = Client().get_video(url="<video_url>")
 <details>
   <summary>All Video attributes</summary>
 
-  | Attribute             | Returns | is cached? |
-  |:----------------------|:-------:|:----------:|
-  | .title                |   str   |    Yes     |
-  | .pornstars            |  list   |    Yes     |
-  | .length               |   str   |    Yes     |
-  | .publish_date         |   str   |    Yes     |
-  | .tags                 |  list   |    Yes     |
-  | .video_qualities      |  list   |    Yes     |
-  | .direct_download_urls |  list   |    Yes     |
-  | .get_thumbnails       |  list   |     No     |
+  | Attribute/Method         | Returns | is cached? |
+  |:-------------------------|:-------:|:----------:|
+  | .title                   |   str   |    Yes     |
+  | .pornstars               |  list   |    Yes     |
+  | .length                  |   str   |    Yes     |
+  | .publish_date            |   str   |    Yes     |
+  | .tags                    |  list   |    Yes     |
+  | .video_qualities         |  list   |    Yes     |
+  | .direct_download_urls()  |  list   |     No     |
+  | .get_thumbnails()        |  list   |     No     |
   
   ### Thumbnails
   
@@ -102,36 +108,48 @@ video = Client().get_video(url="<video_url>")
 
 ```python
 from hqporner_api import Client
+import threading
 client = Client()
 video = client.get_video("<video_url>")
 quality = "best" # Best quality as an example
 
-video.download(quality=quality)
-
 # By default, all videos are downloaded to the current working directory.
 # You can change this by specifying an output path:
-
-video.download(quality=quality, path="your_path_here")
 
 # Custom Callback
 
 # You can define your own callback instead of the text progress. Here's an example
 def custom_callback(downloaded, total):
     """This is an example of how you can implement the custom callback"""
+    if total:
+        percentage = (downloaded / total) * 100
+        print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
+    else:
+        print(f"Downloaded: {downloaded} bytes")
 
-    percentage = (downloaded / total) * 100
-    print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
+stop_event = threading.Event()
+
+video.download(quality=quality, path="your_path_here", callback=custom_callback, stop_event=stop_event)
+
+# From another thread, call stop_event.set() to cancel the download.
 ```
 
 | Argument   | Options/Description                                                                                                                                                                     |
 |------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `quality`  | `best`  `half`  `worst`                                                                                                                                                                 |
+| `quality`  | `best` `half` `worst` or numeric targets like `720`, `"720p"`, `1080`                                                                                                                   |
 | `no_title` | `True` or `False` - If `True`, the video title won't be assigned automatically.           <br/>You need to include the title yourself in the output path along with the file extension. |
-| `callback` | Your custom callback function                                                                                                                                                           |
+| `callback` | Your custom callback function (downloaded_bytes, total_bytes)                                                                                                                          |
 | `path`     | The output path of your video                                                                                                                                                           |
+| `stop_event` | `threading.Event` for canceling legacy downloads                                                                                                                                      |
 
 If you need additional information on how the quality argument works, have a look here:
 <br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md
+
+HQPorner uses the legacy downloader from `eaf_base_api` (direct MP4 streams, not HLS).
+If a partial file exists at the same `path`, the download resumes via HTTP Range.
+If the server ignores Range, the download restarts from zero.
+When `stop_event` is set, the download stops and `download()` returns `False` (partial file is kept for resume).
+On success, `download()` returns `True`.
 
 ### Get videos by actress
 
@@ -146,15 +164,14 @@ actress_object = Client().get_videos_by_actress("<actress-name>", pages=5) # or 
 for video in actress_object:
     print(video.title)
 
-# This will include ALL videos. Not only from the first page.
+# This will include the amount of pages you requested.
 ```
 
 ### Get videos by category
 
 ```python
-from hqporner_api import Client
-from hqporner_api import Category
-videos = Client().get_videos_by_category(Category.POV, pages=5) # example category 
+from hqporner_api import Client, Category
+videos = Client().get_videos_by_category(Category.POV, pages=5) # example category
 
 for video in videos:
     print(video.title)
@@ -163,7 +180,7 @@ for video in videos:
 All attributes of the Category class can be found in locals.py
 You can also see all categories at hqporner.com/categories
 
-The Category can also be a string. e.g Category.BIG_TITS would be equivalent to big-tits
+The Category can also be a string. e.g Category.BIG_TITS would be equivalent to "big-tits"
 
 """
 
@@ -172,7 +189,7 @@ The Category can also be a string. e.g Category.BIG_TITS would be equivalent to 
 ### Search for videos
 
 ```python
-from hqporner_api.api import Client
+from hqporner_api import Client
 videos = Client().search_videos(query="Search Query", pages=5)
 
 for video in videos:
@@ -200,6 +217,7 @@ Sort:
 ```python
 from hqporner_api import Client
 categories = Client().get_all_categories() # Returns a list with all possible categories
+# These are slug strings and can be passed to get_videos_by_category(category=...)
 ```
 
 ### Get random video
@@ -210,7 +228,7 @@ random_video = Client().get_random_video() # Returns a random video object
 
 ### Get brazzers videos
 ```python
-from hqporner_api.api import Client
+from hqporner_api import Client
 brazzers_videos = Client().get_brazzers_videos(pages=5) # Returns brazzers videos (generator)
 ```
 
@@ -220,17 +238,14 @@ Proxy support is NOT implemented in hqporner_api itself, but in its underlying n
 
 ## Exceptions
 
-There are three exceptions:
+Custom exceptions that can be raised:
 
 | Exception       | Reason                                           |
 |-----------------|--------------------------------------------------|
-| InvalidCategory | Raised when a category is invalid                |
-| NoVideosFound   | Raised when no videos were found during a search |
 | InvalidActress  | Raised when an invalid actress was given         |
-| InvalidURL      | Raised when an invalid Video URL is entered      |    
 | NotAvailable    | Raised when a video is not available             |
-| WeirdError      | I don't know why this happens                    |
-| ThumbnailError  | Raised when a thumbnail can't be fetched. Report!|
+| WeirdError      | Raised when thumbnails cannot be found in search |
+| ThumbnailError  | Raised when a thumbnail can't be fetched         |
 
 # Caching
 All network requests (UTF-8 responses) are cached inside the base_api.
@@ -243,11 +258,3 @@ values and won't newly fetch everything.
 
 You can see if an object is cached when at the top of the function name, there is a
 `cached_property` decorator (in the code)
-
-
-
-
-
-
-
-

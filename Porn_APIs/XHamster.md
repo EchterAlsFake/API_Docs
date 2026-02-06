@@ -1,34 +1,37 @@
 # XHamster API Documentation
 
-> - Version 1.5
-> - Author: Johannes Habel
-> - Copyright (C) 2025
-> - License: LGPLv3
-> - Dependencies: requests, beautifulsoup (bs4), eaf_base_api
-> - Optional dependency: ffmpeg-progress-yield av
+> - Name: xhamster_api
+> - Version: 1.7.2
+> - Description: A Python API for the Porn Site xhamster.com
+> - Requires Python: >=3.9
+> - License: LGPL-3.0-only
+> - Author: Johannes Habel (EchterAlsFake@proton.me)
+> - Dependencies: bs4, eaf_base_api, m3u8
+> - Optional dependencies: av (Python >=3.10), full = lxml, httpx[http2], httpx[socks]
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
 > Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
 > an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
 
-**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md 
+**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 
 # WARNING
 > [!WARNING]
 > This API is against the Terms of Services of `xhamster.com`. Usage is at your risk.
 > I (the Author) am NOT liable for damages caused by misuse of this API package!
 
-
 ## Table of Contents
 - [Installation](#installation)
 - [Client](#client)
-  - [Video](#get-a-video-object)
-  - [Download videos](#download-a-video)
+  - [Get a video object](#get-a-video-object)
+  - [Download a video](#download-a-video)
 - [Searching](#searching)
 - [Shorts](#shorts)
-- [Channel / Pornstar / Creators](#channel--pornstar--creator)
-- [Video Remuxing (IMPORTANT)](#remuxing-videos-important)
+- [Channels, Pornstars, Creators](#channels-pornstars-creators)
+- [Remuxing videos](#remuxing-videos)
 - [Proxy Support](#proxy-support)
+- [Exceptions](#exceptions)
 - [Caching](#caching)
 
 # Installation
@@ -36,47 +39,42 @@ Installation from `Pypi`:
 
 $ `pip install xhamster_api`
 
-Or Install directly from `GitHub`
+Or install directly from `GitHub`:
 
-`pip install git+https://github.com/EchterAlsFake/xhamster_api`
+$ `pip install git+https://github.com/EchterAlsFake/xhamster_api`
+
+Optional extras:
+- `pip install xhamster_api[full]` (lxml + httpx extras)
+- `pip install xhamster_api[av]` (PyAV for remuxing, Python >=3.10)
 
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
-> from commits which could break thing unexpectedly!
+> from commits which could break things unexpectedly!
 
-> [!NOTE]
-> The `base_api` package contains functions which are used by all of my Porn APIs. Almost all sites work in 
-> a similar way, which is why I created this package. 
-> <br>Source: `https://github.com/EchterAlsFake/eaf_base_api`
-
-# The main objects and classes
-
-## Client
+# Client
 
 ```python
 from xhamster_api import Client
 client = Client()
 
-# If you want to apply a custom configuration for the BaseCore class, here you go:  
+# If you want to apply a custom configuration for the BaseCore class, here you go:
 # You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
-from base_api.modules.config import config
+from base_api.modules.config import RuntimeConfig
 from base_api.base import BaseCore
 
 # Change the values you like e.g.,
-config.request_delay = 10
+cfg = RuntimeConfig()
+cfg.request_delay = 10
 
 # Apply the configuration
-core = BaseCore(config=config)
-core.enable_logging() # .... if you want to enable logging
-core.enable_kill_switch() # ... if you want to enable kill switch
-client = Client(core)
+core = BaseCore(config=cfg)
+core.enable_logging()  # Enable logging if you want
+core.enable_kill_switch()  # Enable kill switch if you want
+client = Client(core=core)
 # New client object with your custom configuration applied
 ```
 
-> [!NOTE]
-> The client handles everything, and you should **ALWAYS** import and set it up!
-
-### Get a video object
+## Get a video object
 
 ```python
 from xhamster_api import Client
@@ -86,158 +84,177 @@ video = Client().get_video(url="<video_url>")
 <details>
   <summary>All Video attributes</summary>
 
-| Attribute             | Returns  | is cached? |
-    |:----------------------|:--------:|:----------:|
-    | .title                |   str    |    Yes     |
-    | .pornstars            |  list    |    Yes     |
-    | .publish_date         |   str    |    Yes     |
-    | .tags                 |   list   |    Yes     |
-    | .thumbnail            |   str    |    Yes     |
-    
+| Attribute/Method       | Returns | is cached? |
+|:-----------------------|:-------:|:----------:|
+| .title                 |   str   |    Yes     |
+| .pornstars             |  list   |    Yes     |
+| .thumbnail             |   str   |    Yes     |
+| .m3u8_base_url          |   str   |    Yes     |
+| .get_segments(quality) |  list   |     No     |
+
 </details>
 
 ## Download a video
 
-
 ```python
 from xhamster_api import Client
+import threading
+
+def custom_callback(downloaded, total):
+    """Example callback for progress updates."""
+    if total:
+        percentage = (downloaded / total) * 100
+        print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
+    else:
+        print(f"Downloaded: {downloaded} bytes")
+
 client = Client()
 video = client.get_video("<video_url>")
-quality = "best" # Best quality as an example, can also be an int e.g., 720, 1080
+stop_event = threading.Event()
 
-video.download(quality=quality, path="your_path_here")
-# Custom Callback
+video.download(
+    quality="best",
+    path="./downloads",
+    callback=custom_callback,
+    remux=True,
+    stop_event=stop_event,
+    segment_state_path="./downloads/xhamster.state.json",
+)
 
-# You can define your own callback instead if tqdm. You must make a function that takes pos and total as arguments.
-# This will disable tqdm
-def custom_callback(downloaded, total):
-    """This is an example of how you can implement the custom callback"""
-
-    percentage = (downloaded / total) * 100
-    print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
+# From another thread, call stop_event.set() to cancel the download.
 ```
 
-Arguments:
-- quality: string: ("best", "half", "worst")
-- downloader: string: ("threaded", "FFMPEG", "default")
+| Argument | Options/Description |
+|----------|---------------------|
+| `quality` | `best` `half` `worst` or numeric targets like `720`, `"720p"`, `1080`. |
+| `path` | Output directory by default. If `no_title=True`, provide the full output file path including extension. |
+| `callback` | Custom callback function `(downloaded_bytes, total_bytes)`; `total_bytes` can be `None`. |
+| `no_title` | `True` or `False` - If `True`, the video title won't be appended automatically. |
+| `remux` | `True` or `False` - Remux MPEG-TS to MP4 container (PyAV required). |
+| `callback_remux` | Callback for remux progress. |
+| `start_segment` | Start segment index for HLS resumes (advanced). |
+| `stop_event` | `threading.Event` for cancellation. |
+| `segment_state_path` | JSON state file for HLS resume. Reuse the same path to resume later. |
+| `segment_dir` | Directory to store HLS segments while downloading. |
+| `return_report` | If `True`, returns a report dict instead of raising on cancellation/failure. |
+| `cleanup_on_stop` | If `True`, remove partial output and segments on cancellation. |
+| `keep_segment_dir` | If `True`, keep the segment directory after download. |
 
-The Downloader defines which method will be used to fetch the segments. FFMPEG is the most stable one, but not as fast
-as the threaded one, and it needs FFMPEG installed on your system. The "default" will fetch one segment by one, which is
-very slow, but stable. Threaded downloads can get as high as 70 MB per second.
+If you need additional information on how the quality argument works, have a look here:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md
 
-- no_title: `True` or `False` if the video title shouldn't be assigned automatically. If you set this to `True`, you need
-to include the title by yourself into the output path and additionally the file extension.
+### Resume and cancellation behavior
 
+Use `segment_state_path` to resume HLS downloads. If `stop_event` is set and `return_report=False`,
+`DownloadCancelled` is raised. If `return_report=True`, a report dict is returned instead.
 
 # Searching
-### Search Videos — Usage (minimal)
-
-Use `search_videos(query, **filters)` to stream `Video` results with optional filters.
 
 ```python
 from xhamster_api import Client
+
 client = Client()
-
-
-for v in client.search_videos("cosplay"):
-    print(v.title)
-
-# filtered
 results = client.search_videos(
-  "cosplay",
-  minimum_quality="1080p",
-  sort_by="newest",          # "" = relevance
-  category=["vintage","lesbian"],  # str or list[str]
-  vr=False,
-  full_length_only=True,
-  min_duration="10",         # "2"|"5"|"10"|"30"|"40"
-  date="monthly",            # "latest"|"weekly"|"monthly"|"yearly"
-  production="studios",      # "studios"|"creators"
-  fps="60",                  # "30"|"60"
-  pages=3,
-  max_workers=10
+    query="cosplay",
+    minimum_quality="1080p",
+    sort_by="newest",           # "" = relevance
+    category=["vintage", "lesbian"],
+    vr=False,
+    full_length_only=True,
+    min_duration="10",
+    date="monthly",
+    production="studios",
+    fps="60",
+    pages=2,
+    videos_concurrency=10,
+    pages_concurrency=2,
 )
+
+for video in results:
+    print(video.title)
 ```
 
-**Filters**
-- `minimum_quality`: `"720p"|"1080p"|"2160p"` (default `"720p"`)
-- `sort_by`: `"views"|"newest"|"best"|"longest"` or `""` for relevance
-- `category`: single `str` or `list[str]` to combine categories
-- `vr`: `True` to restrict to VR
-- `full_length_only`: `True` to exclude clips/previews
-- `min_duration`: minimum minutes (`"2"|"5"|"10"|"30"|"40"`)
-- `date`: recency window (`"latest"|"weekly"|"monthly"|"yearly"`)
-- `production`: `"studios"` or `"creators"`
-- `fps`: `"30"` or `"60"`
-- `pages`: number of result pages to iterate
-- `max_workers`: concurrency for fetching
-- Leave `sort_by` empty for relevance
+Filters:
+- `minimum_quality`: `"720p"`, `"1080p"`, `"2160p"`.
+- `sort_by`: `"views"`, `"newest"`, `"best"`, `"longest"`, or `""` for relevance.
+- `category`: `list[str]` of category slugs (e.g., `["german"]`, `["amateur", "milf"]`).
+- `vr`: `True` to restrict to VR.
+- `full_length_only`: `True` to exclude previews/clips.
+- `min_duration`: `"2"`, `"5"`, `"10"`, `"30"`, `"40"`.
+- `date`: `"latest"`, `"weekly"`, `"monthly"`, `"yearly"`.
+- `production`: `"studios"` or `"creators"`.
+- `fps`: `"30"` or `"60"`.
+- `pages`: total pages to fetch (page 1..N).
+- `videos_concurrency` / `pages_concurrency`: override BaseCore defaults.
 
 # Shorts
-Shorts = Moments
+Shorts are called Moments on XHamster.
 
 ```python
 from xhamster_api import Client
 client = Client()
 short = client.get_short("<short_url>")
 
-# Access infomration
 title = short.title
 likes = short.likes
 author = short.author
-short.download() # Works exactly like the video download (See above)
+
+short.download(quality="best", path="./shorts")
 ```
 
-# Channel / Pornstar / Creator
-Although they are different objects, they all share the same attributes:
+Short attributes:
+- `title`, `author`, `likes`, `m3u8_base_url`
+- `get_segments(quality)` and `download(...)` work like the video object.
+
+# Channels, Pornstars, Creators
+Channels, Pornstars, and Creators share the same attributes and behavior.
 
 ```python
 from xhamster_api import Client
 client = Client()
 
 pornstar = client.get_pornstar("<url>")
+channel = client.get_channel("<url>")
+creator = client.get_creator("<url>")
 
-# Access information (works for the other objects too)
-shorts = pornstar.get_shorts() # gets the Short objects as a generator, does not work for Channels
-total_videos_count = pornstar.videos_count
-total_views_count = pornstar.total_views_count
-subscribers_count = pornstar.subscribers_count
-avatar_url = pornstar.avatar_url
-name = pornstar.name
+print(pornstar.name, pornstar.videos_count)
 
-information = pornstar.get_information
-# This is the information like ethnicity, region, age. You'll receive this in form
-# of a dictionary, because it's not always consistent which attributes are present
+for video in pornstar.videos(pages=2):
+    print(video.title)
 
-videos = pornstar.videos() # A generator of Video objects
+for short in pornstar.get_shorts(pages=1):
+    print(short.title)
 ```
 
-### Remuxing Videos (important)
-Videos will by default be saved in MPEG-TS format, because that is
-what the website gives us. However, this may cause problems when playing
-with older video players, AND you can also not tag metadata to the 
-files, because they miss a proper container.
+Shared attributes:
 
-This can be fixed using remuxing the video. This only takes a few seconds
-and there's no quality loss. However, you need to install `av` for that.
+| Attribute | Returns | is cached? |
+|:----------|:-------:|:----------:|
+| .name | str | Yes |
+| .subscribers_count | str | Yes |
+| .videos_count | str | Yes |
+| .total_views_count | str | Yes |
+| .avatar_url | str | Yes |
+| .get_information | dict or None | Yes |
 
-`pip installl av` # Which will also install FFmpeg bundles binaries
+`.videos(pages=2, videos_concurrency=None, pages_concurrency=None)` yields Video objects.
+`.get_shorts(pages=2, videos_concurrency=2, pages_concurrency=1)` yields Short objects when available.
 
-```python
-from api_example import Client
+# Remuxing videos
+HLS videos are saved as MPEG-TS and then renamed to `.mp4`. Some players have trouble with this
+and metadata tagging is not possible without a proper container. Enable `remux=True` to convert the file
+to an MP4 container without quality loss.
 
-video = Client().get("url")
-video.download(quality="best", downloader="threaded", callback=Callback_function_here, path="./", 
-               remux=True, callback_remux=CallBackFunctionHere)
-
-# The remux mode has its own callback function which works the same as the above example,
-# taking pos and total as an input, however you might not really see progress, because
-# it's very fucking fast.
-```
+Install PyAV:
+`pip install xhamster_api[av]`
 
 # Proxy Support
-Proxy support is NOT implemented in xhamster_api itself, but in its underlying network component: `eaf_base_api`
-<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
+Proxy support is not implemented in xhamster_api itself, but in its underlying network component: `eaf_base_api`.
+Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies.
+
+# Exceptions
+- `DownloadCancelled`: Raised when `stop_event` is set (unless `return_report=True`).
+- `NetworkingError`, `InvalidProxy`, `KillSwitch`, `BotProtectionDetected`: Raised by `eaf_base_api` for network/proxy issues.
 
 # Caching
 All network requests (UTF-8 responses) are cached inside the base_api.
@@ -249,4 +266,4 @@ fetch the same video once again, your system will automatically display the cach
 values and won't newly fetch everything.
 
 You can see if an object is cached when at the top of the function name, there is a
-`cached_property` decorator (in the code)
+`cached_property` decorator (in the code).

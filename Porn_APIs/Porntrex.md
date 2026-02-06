@@ -1,11 +1,15 @@
 # Porntrex API Documentation
 
-> - Version 1.0
-> - Author: Johannes Habel
-> - Copyright (C) 2025
-> - License: LGPLv3
-> - Dependencies: anyio, bs4, brotli, certifi, eaf_base_api, h11, h2, hpack, httpcore, httpx, hyperframe,
->   idna, json5, lxml, m3u8, sniffio, socksio, soupsieve, typing_extensions
+> - Name: porntrex_api
+> - Version: 1.1
+> - Description: A Python API for the Porn Site xvideos.com
+> - Requires Python: >=3.9
+> - License: LGPL-3.0-only
+> - Author: Johannes Habel (EchterAlsFake@proton.me)
+> - Dependencies: bs4, eaf_base_api, json5
+> - Optional dependencies: full = lxml, httpx[http2], httpx[socks]
+> - Homepage: https://github.com/EchterAlsFake/porntrex_api
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
 > Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
@@ -21,10 +25,10 @@
 
 # Table of Contents
 - [Installation](#installation)
-- [Initializing the Client](#client)
-- [The Video object](#get-a-video-object)
-    - [Downloading](#downloading-a-video)
-- [Models / Channels](#model--channel)
+- [Client](#client)
+- [The Video Object](#get-a-video-object)
+  - [Downloading](#downloading-a-video)
+- [Models / Channels](#models--channels)
 - [Searching Videos](#searching)
 - [Proxy Support](#proxy-support)
 - [Caching](#caching)
@@ -38,6 +42,9 @@ $ `pip install porntrex_api`
 Or Install directly from `GitHub`
 
 `pip install git+https://github.com/EchterAlsFake/porntrex_api`
+
+Optional extras (faster parsing + extra httpx features):
+`pip install porntrex_api[full]`
 
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
@@ -61,7 +68,7 @@ config.request_delay = 10
 core = BaseCore(config=config)
 core.enable_logging() # .... if you want to enable logging
 core.enable_kill_switch() # ... if you want to enable kill switch
-client = Client(core)
+client = Client(core=core)
 # New client object with your custom configuration applied
 ```
 
@@ -78,36 +85,38 @@ video = Client().get_video(url="<video_url>")
 <details>
   <summary>All Video attributes</summary>
   
-  | Attribute               | Returns | is cached? |
-  |:------------------------|:-------:|:----------:|
-  | .title                  |   str   |    Yes     |
-  | .author                 |   str   |    Yes     |
-  | .duration               |   str   |    Yes     |
-  | .views                  |   str   |    Yes     |
-  | .tags                   |  list   |    Yes     |
-  | .categories             |  list   |    Yes     |  
-  | .thumbnail              |  list   |    Yes     |
-  | .publish_date           |   str   |    Yes     |
-  | .video_qualities        |  list   |     No     |
-  | .direct_download_urls   |  list   |     No     |
-  | .video_id               |   str   |    Yes     |
-  | .license_code           |   str   |    Yes     |
-  | .lrc                    |   str   |    Yes     |
-  | .rnd                    |   str   |    Yes     |
-  | .description            |   str   |    Yes     |
-  | .subscribers_count      |   str   |    Yes     |
+  | Attribute/Method          | Returns | is cached? |
+  |:--------------------------|:-------:|:----------:|
+  | .title                    |   str   |    Yes     |
+  | .author                   |   str   |    Yes     |
+  | .duration                 |   str   |    Yes     |
+  | .views                    |   str   |    Yes     |
+  | .tags                     |  list   |    Yes     |
+  | .categories               |  list   |    Yes     |  
+  | .thumbnail                |   str   |    Yes     |
+  | .publish_date             |   str   |    Yes     |
+  | .video_qualities()         |  list   |     No     |
+  | .direct_download_urls()    |  list   |     No     |
+  | .video_id                 |   str   |    Yes     |
+  | .license_code             |   str   |    Yes     |
+  | .lrc                      |   str   |    Yes     |
+  | .rnd                      |   str   |    Yes     |
+  | .description              |   str   |    Yes     |
+  | .subscribers_count        |   str   |    Yes     |
 
 
 </details>
 
 ### Downloading a Video:
 ```python
-from xvideos_api import Client
-from base_api import Callback
+from porntrex_api import Client
+from base_api.modules.progress_bars import Callback
+import threading
 
 client = Client()
 video = client.get_video("...")
-video.download(quality="best", path="./IdontKnow.mp4", callback=Callback.text_progress_bar) 
+stop_event = threading.Event()
+video.download(quality="best", path="./", callback=Callback.text_progress_bar, stop_event=stop_event) 
  
 # Custom Callback Example
 def custom_callback(downloaded, total):
@@ -117,17 +126,24 @@ def custom_callback(downloaded, total):
     print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
 ```
 
-| Argument   | Description                                  | possible values                         |
-|------------|----------------------------------------------|-----------------------------------------|
-| quality    | The video quality                            | `best` `half` `worst`                   |
-| path       | The output path of the video                 | Any `str` object                        |
-| callback   | Custom callback function                     | Any function with (pos,total) structure |
-| no_title   | The title will not be included into the path | `True` `False`                          |
+| Argument   | Description                                  | possible values                              |
+|------------|----------------------------------------------|----------------------------------------------|
+| quality    | The video quality                            | `best` `half` `worst` or numeric like `720`  |
+| path       | The output path of the video                 | Any `str` object                             |
+| callback   | Custom callback function                     | Any function with (pos,total) structure      |
+| no_title   | The title will not be included into the path | `True` `False`                               |
+| stop_event | Cancel download when set                     | `threading.Event`                           |
 
 > [!NOTE]
 > For more information on the `quality` value See [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
 
-# Model / Channel
+Porntrex uses the legacy downloader from `eaf_base_api` (direct MP4 streams, not HLS).
+If a partial file exists at the same `path`, the download resumes via HTTP Range.
+If the server ignores Range, the download restarts from zero.
+When `stop_event` is set, the download stops and `download()` returns `False` (partial file is kept for resume).
+On success, `download()` returns `True`.
+
+# Models / Channels
 A model and a channel are nearly the same with a little exception on the Thumbnail. However, both
 expose the same attributes and work the same way. You can fetch them like this:
 
@@ -136,7 +152,7 @@ from porntrex_api import Client
 
 client = Client()
 model = client.get_model("<model_url_here>")
-channel = client.get_channel("<channel_url_here")
+channel = client.get_channel("<channel_url_here>")
 
 print(model.name) # Prints the name (same for channel)
 print(model.image) # Prints the URLs of the avatar image (same for channel)
@@ -162,7 +178,7 @@ Searching is as simple as the rest.
 from porntrex_api import Client
 
 client = Client()
-search_results = client.search(query="<your_search_query") # Returns Generator of videos
+search_results = client.search(query="<your_search_query>") # Returns Generator of videos
 
 for video in search_results:
     print(video.title)

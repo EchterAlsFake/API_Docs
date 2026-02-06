@@ -1,34 +1,37 @@
 # XNXX API Documentation
 
-> - Version 1.5.6
-> - Author: Johannes Habel
-> - Copyright (C) 2024-2025
-> - License: LGPLv3
-> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
-m3u8, beautifulsoup4
-> - Optional: av, ffmpeg-progress-yield
+> - Name: xnxx_api
+> - Version: 1.6.3
+> - Description: A Python API for the Porn Site xnxx.com
+> - Requires Python: >=3.9
+> - License: LGPL-3.0-only
+> - Author: Johannes Habel (EchterAlsFake@proton.me)
+> - Dependencies: bs4, eaf_base_api, m3u8
+> - Optional dependencies: av (Python >=3.10), full = lxml, httpx[http2], httpx[socks]
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
 > Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
 > an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
 
-**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md 
+**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
 
 # WARNING
 > [!WARNING]
 > This API is against the Terms of Services of `xnxx.com`. Usage is at your risk.
 > I (the Author) am NOT liable for damages caused by misuse of this API package!
 
-
-# Table of Contents
+## Table of Contents
 - [Installation](#installation)
-- [Initializing the Client](#client)
-- [The Video object](#get-a-video-object)
-    - [Downloading](#download-a-video)
+- [Client](#client)
+  - [Get a video object](#get-a-video-object)
+  - [Download a video](#download-a-video)
 - [Searching](#searching)
-- [Model / Users](#models--users) 
-- [Searching Filters](#searching-filters)
+- [Users](#users)
+- [Search filters](#search-filters)
+- [Remuxing videos](#remuxing-videos)
 - [Proxy Support](#proxy-support)
+- [Exceptions](#exceptions)
 - [Caching](#caching)
 
 # Installation
@@ -36,40 +39,42 @@ Installation from `Pypi`:
 
 $ `pip install xnxx_api`
 
-Or Install directly from `GitHub`
+Or install directly from `GitHub`:
 
-`pip install git+https://github.com/EchterAlsFake/xnxx_api`
+$ `pip install git+https://github.com/EchterAlsFake/xnxx_api`
+
+Optional extras:
+- `pip install xnxx_api[full]` (lxml + httpx extras)
+- `pip install xnxx_api[av]` (PyAV for remuxing, Python >=3.10)
 
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
-> from commits which could break thing unexpectedly!
+> from commits which could break things unexpectedly!
 
-## Client
+# Client
 
 ```python
 from xnxx_api import Client
 client = Client()
 
-# If you want to apply a custom configuration for the BaseCore class, here you go:  
+# If you want to apply a custom configuration for the BaseCore class, here you go:
 # You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
-from base_api.modules.config import config
+from base_api.modules.config import RuntimeConfig
 from base_api.base import BaseCore
 
 # Change the values you like e.g.,
-config.request_delay = 10
+cfg = RuntimeConfig()
+cfg.request_delay = 10
 
 # Apply the configuration
-core = BaseCore(config=config)
-core.enable_logging() # .... if you want to enable logging
-core.enable_kill_switch() # ... if you want to enable kill switch
-client = Client(core)
+core = BaseCore(config=cfg)
+core.enable_logging()  # Enable logging if you want
+core.enable_kill_switch()  # Enable kill switch if you want
+client = Client(core=core)
 # New client object with your custom configuration applied
 ```
 
-> [!NOTE]
-> The client handles everything, and you should **ALWAYS** import and set it up!
-
-### Get a video object
+## Get a video object
 
 ```python
 from xnxx_api import Client
@@ -78,146 +83,144 @@ video = Client().get_video(url="<video_url>")
 
 <details>
   <summary>All Video attributes</summary>
-    
-  | Attribute        | Returns |  is cached?   |
-  |:-----------------|:-------:|:-------------:|
-  | .title           |   str   |      Yes      |
-  | .author          |   str   |      Yes      |
-  | .length          |   str   |      Yes      |
-  | .highest_quality |   str   |      Yes      |
-  | .views           |   int   |      Yes      |
-  | .comment_count   |   int   |      Yes      |
-  | .likes           |   int   |      Yes      |
-  | .dislikes        |   int   |      Yes      |
-  | .pornstars       |  list   |      Yes      |
-  | .description     |   str   |      Yes      |
-  | .tags            |  list   |      Yes      |
-  | .thumbnail_url   |  list   |      Yes      |
-  | .publish_date    |   str   |      Yes      |
-  | .content_url     |   str   |      Yes      |
+
+| Attribute/Method        | Returns | is cached? |
+|:------------------------|:-------:|:----------:|
+| .title                  |   str   |    Yes     |
+| .author                 |   str   |    Yes     |
+| .length                 |   str   |    Yes     |
+| .highest_quality        |   str   |    Yes     |
+| .views                  |   str   |    Yes     |
+| .comment_count          |   str   |    Yes     |
+| .likes                  |   str   |    Yes     |
+| .dislikes               |   str   |    Yes     |
+| .pornstars              |  list   |    Yes     |
+| .description            |   str   |    Yes     |
+| .tags                   |  list   |    Yes     |
+| .thumbnail_url          |  list   |    Yes     |
+| .publish_date           |   str   |    Yes     |
+| .content_url            |   str   |    Yes     |
+| .m3u8_base_url           |   str   |    Yes     |
+| .get_segments(quality)  |  list   |     No     |
 
 </details>
 
-### Download a video
+## Download a video
 
 ```python
-from xnxx_api.xnxx_api import Client
+from xnxx_api import Client
+import threading
+
+def custom_callback(downloaded, total):
+    """Example callback for progress updates."""
+    if total:
+        percentage = (downloaded / total) * 100
+        print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
+    else:
+        print(f"Downloaded: {downloaded} bytes")
 
 client = Client()
-video = client.get_video("...")
-video.download(downloader="threaded", quality="best", path="./")
-                                            # See Locals
-# This will save the video in the current working directory with the filename being the video title
-# Custom Callback
+video = client.get_video("<video_url>")
+stop_event = threading.Event()
 
-# You can define your own callback instead if tqdm. You must make a function that takes pos and total as arguments.
-# This will disable tqdm
-def custom_callback(downloaded, total):
-    """This is an example of how you can implement the custom callback"""
+video.download(
+    quality="best",
+    path="./downloads",
+    callback=custom_callback,
+    remux=True,
+    stop_event=stop_event,
+    segment_state_path="./downloads/xnxx.state.json",
+)
 
-    percentage = (downloaded / total) * 100
-    print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
+# From another thread, call stop_event.set() to cancel the download.
 ```
 
-| Argument   | Description                                  | possible values                         |
-|------------|----------------------------------------------|-----------------------------------------|
-| quality    | The video quality                            | `best` `half` `worst`                   |
-| downloader | The download mode of the video               | `threaded` `FFMPEG` `default`           |
-| path       | The output path of the video                 | Any `str` object                        |
-| callback   | Custom callback function                     | Any function with (pos,total) structure |
-| no_title   | The title will not be included into the path | `True` `False`                          |
+| Argument | Options/Description |
+|----------|---------------------|
+| `quality` | `best` `half` `worst` or numeric targets like `720`, `"720p"`, `1080`. |
+| `path` | Output directory by default. If `no_title=True`, provide the full output file path including extension. |
+| `callback` | Custom callback function `(downloaded_bytes, total_bytes)`; `total_bytes` can be `None`. |
+| `no_title` | `True` or `False` - If `True`, the video title won't be appended automatically. |
+| `remux` | `True` or `False` - Remux MPEG-TS to MP4 container (PyAV required). |
+| `callback_remux` | Callback for remux progress. |
+| `start_segment` | Start segment index for HLS resumes (advanced). |
+| `stop_event` | `threading.Event` for cancellation. |
+| `segment_state_path` | JSON state file for HLS resume. Reuse the same path to resume later. |
+| `segment_dir` | Directory to store HLS segments while downloading. |
+| `return_report` | If `True`, returns a report dict instead of raising on cancellation/failure. |
+| `cleanup_on_stop` | If `True`, remove partial output and segments on cancellation. |
+| `keep_segment_dir` | If `True`, keep the segment directory after download. |
 
-> [!NOTE]
-> For more information on the `quality` and `downloader` values See [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
+If you need additional information on how the quality argument works, have a look here:
+<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md
 
-
-### Remuxing Videos (important)
-Videos will by default be saved in MPEG-TS format, because that is
-what the website gives us. However, this may cause problems when playing
-with older video players, AND you can also not tag metadata to the 
-files, because they miss a proper container.
-
-This can be fixed using remuxing the video. This only takes a few seconds
-and there's no quality loss. However, you need to install `av` for that.
-
-`pip installl av` # Which will also install FFmpeg bundles binaries
-
-```python
-from api_example import Client
-
-video = Client().get("url")
-video.download(quality="best", downloader="threaded", callback=Callback_function_here, path="./", 
-               remux=True, callback_remux=CallBackFunctionHere)
-
-# The remux mode has its own callback function which works the same as the above example,
-# taking pos and total as an input, however you might not really see progress, because
-# it's very fucking fast.
-```
-
-
+### Resume and cancellation behavior
+Use `segment_state_path` to resume HLS downloads. If `stop_event` is set and `return_report=False`,
+`DownloadCancelled` is raised. If `return_report=True`, a report dict is returned instead.
 
 # Searching
+
 ```python
-from xnxx_api import Client
-from xnxx_api import search_filters
+from xnxx_api import Client, search_filters
 
 client = Client()
-search = client.search("<query>", upload_time=search_filters.UploadTime.month, length=search_filters.Length.X_0_10min, 
-                       searching_quality=search_filters.SearchingQuality.X_720p, mode=search_filters.Mode.default)
-# this is an example
+search = client.search(
+    query="cats",
+    upload_time=search_filters.UploadTime.month,
+    length=search_filters.Length.X_0_10min,
+    searching_quality=search_filters.SearchingQuality.X_720p,
+    mode=search_filters.Mode.default,
+)
 
-for video in search.videos:
-  print(video.title)
-  # Iterate like this over results
+for video in search.videos(pages=2):
+    print(video.title)
 ```
 
-> [!Important]
-> You can also search using categories with filters. Specify the category name in the query.
+Notes:
+- `search.videos(pages=0)` yields the first page only (default).
+- `Search.total_pages` contains the total available pages.
 
-# Models / Users
+# Users
 
 ```python
-from xnxx_api.xnxx_api import Client
+from xnxx_api import Client
 
 client = Client()
-model = client.get_user("<user_url>") # example: xnxx.com/pornstar/...
+user = client.get_user("https://www.xnxx.com/pornstar/<name>")
 
-videos = model.videos
+for video in user.videos(pages=2):
+    print(video.title)
 
-for video in videos:
-  print(video.title)
-  
-# Total number of videos:
-print(model.total_videos)
-
-
+print(user.total_videos)
+print(user.total_pages)
+print(user.total_video_views)
 ```
 
-## Searching Filters
+# Search filters
 
-Currently, there are three filters available:
+Use `xnxx_api.search_filters`:
 
-- Searching Quality
-- Upload Time
-- Length
-- Mode
+- `SearchingQuality`: `X_720p`, `X_1080p_plus`
+- `UploadTime`: `month`, `year`
+- `Length`: `X_0_10min`, `X_10min_plus`, `X_10_20min`, `X_20min_plus`
+- `Mode`: `default`, `hits`, `random`
 
-They are located in:
+# Remuxing videos
+HLS videos are saved as MPEG-TS and then renamed to `.mp4`. Some players have trouble with this
+and metadata tagging is not possible without a proper container. Enable `remux=True` to convert the file
+to an MP4 container without quality loss.
 
-```python
-from xnxx_api import search_filters
-from xnxx_api import Client
-# Use them like this:
-
-search = Client().search("<query>", length=search_filters.Length.X_0_10min, upload_time=search_filters.UploadTime.year,
-                         searching_quality=search_filters.SearchingQuality.X_1080p_plus, mode=search_filters.Mode.default)
-videos = search.videos
-# I think the names explain what it does :)
-```
+Install PyAV:
+`pip install xnxx_api[av]`
 
 # Proxy Support
-Proxy support is NOT implemented in sex_api itself, but in its underlying network component: `eaf_base_api`
-<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
+Proxy support is not implemented in xnxx_api itself, but in its underlying network component: `eaf_base_api`.
+Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies.
+
+# Exceptions
+- `InvalidUrl`, `InvalidResponse`, `RegionBlocked`: Raised by the XNXX API when the URL or response is invalid.
+- `DownloadCancelled`: Raised when `stop_event` is set (unless `return_report=True`).
+- `NetworkingError`, `InvalidProxy`, `KillSwitch`, `BotProtectionDetected`: Raised by `eaf_base_api` for network/proxy issues.
 
 # Caching
 All network requests (UTF-8 responses) are cached inside the base_api.
@@ -229,4 +232,4 @@ fetch the same video once again, your system will automatically display the cach
 values and won't newly fetch everything.
 
 You can see if an object is cached when at the top of the function name, there is a
-`cached_property` decorator (in the code)
+`cached_property` decorator (in the code).

@@ -1,11 +1,14 @@
 # EPorner Documentation
 
-> - Version 1.8.8
-> - Author: Johannes Habel
-> - Copyright (C) 2024-2025
-> - License: LGPLv3
-> - Dependencies: eaf_base_api, rfc3986, certifi, charset-normalizer, h11, httpcore, idna, sniffio, soupsieve,
-m3u8, ffmpeg-progress-yield, beautifulsoup4
+> - Name: Eporner_API
+> - Version: 1.9.5
+> - Description: A Python API for the Porn Site Eporner.com
+> - Requires Python: >=3.9
+> - License: LGPL-3.0-only
+> - Author: Johannes Habel (EchterAlsFake@proton.me)
+> - Dependencies: bs4, eaf_base_api
+> - Optional dependencies: full = lxml, httpx[http2], httpx[socks]
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
 > Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
@@ -18,28 +21,30 @@ The ToS of Eporner.com clearly say that using scrapers / bots isn't allowed.
 <br>This API uses primarily the official Webmasters API which is in compliance to the ToS.
 
 <br>However, there are more features that can be enabled using the function parameters.
-<br> The function parameter is called `enable_html_scraping`. This parameter is by default
-<br> set to `False`. However, you can set it to `True` to enable all features.
+<br>The function parameter is called `enable_html_scraping`. In current releases it defaults
+<br>to `True`. Set it to `False` if you want Webmasters-only access and ToS compliance.
+<br>Downloading videos and HTML-only fields (likes, dislikes, rating, thumbnail, source URL)
+<br>require `enable_html_scraping=True`.
 
 If you are using this, you may face legal actions, so it's at your own risk!
 
 # Table of Contents
 
 - [Installation](#installation)
+- [The Client Object](#the-client-object)
 - [The Video Object](#video-object)
-    - [Video Information](#video-information)
-    - [Download a Video](#downloading-a-video)
-  [The Pornstar Object](#the-pornstar-object)
+  - [Video Information](#video-information)
+  - [Download a Video](#downloading-a-video)
+- [The Pornstar Object](#the-pornstar-object)
 - [Searching for Videos](#searching-for-videos)
 - [Videos by Category](#videos-by-category)
 - [Locals](#locals)
-    - [Encoding](#encoding)
-
+  - [Encoding](#encoding)
 - [Sorting](#sorting)
-    - [Order](#order)
-    - [Gay](#gay)
-    - [Low Quality](#lowquality)
-    - [Category](#category)
+  - [Order](#order)
+  - [Gay](#gay)
+  - [Low Quality](#lowquality)
+  - [Category](#category)
 - [Proxy Support](#proxy-support)
 - [Caching](#caching)
 
@@ -51,13 +56,16 @@ $ `pip install eporner_api`
 
 Or Install directly from `GitHub`
 
-`pip install git+https://github.com/EchterAlsFake/eporner_api`
+`pip install git+https://github.com/EchterAlsFake/EPorner_API`
+
+Optional extras (faster parsing + extra httpx features):
+`pip install eporner_api[full]`
 
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break thing unexpectedly!
 
-# The Client object
+# The Client Object
 ## Client
 
 ```python
@@ -91,10 +99,10 @@ The video object has the following attributes:
 from eporner_api import Client, Encoding
 
 client = Client()
-video = client.get_video("<video_url>", enable_html_scraping=False)
+video = client.get_video("<video_url>")  # enable_html_scraping defaults to True
 """
-Set Enable HTML Scraping to True, if you need more information.
-Downloading Videos is only possible if you enabled HTML Scraping!
+Set enable_html_scraping=False to use only the Webmasters API.
+Downloading videos and HTML-only fields require enable_html_scraping=True.
 """
 
 # Now you access video attributes like
@@ -111,29 +119,30 @@ video.download(quality="best", path="./", mode=Encoding.mp4_h264)
 ```
 ### Video Information
 
-> Webmasters
+> Webmasters API (always available)
 > - Video ID
 > - Tags
 > - Title
 > - Views
 > - Rate
 > - Publish Date
-> - Length
-> - Length (Minutes)
+> - Length (seconds)
+> - Length (minutes)
 > - Embed URL (to embed the video in a website)
 >
-> HTML Content
-> -
+> HTML scraping (requires enable_html_scraping=True)
 > - Bitrate
 > - Source video URL (you probably never need this)
 > - Rating
 > - Rating Count
 > - Thumbnail
-> - Pornstars (their videos and some information)
+> - Likes
+> - Dislikes
+> - Author / uploader
 
 ### Functions
-- direct_download_link() # Returns the direct download URL
-- download()
+- direct_download_link(quality, mode) # Returns the direct download URL
+- download() # Downloads the video (legacy downloader)
 
 ### Downloading a Video
 
@@ -143,28 +152,70 @@ from eporner_api import Client
 video = Client().get_video("<some_url>")
 quality = "best"
 
-video.download(quality=quality, path="./")
-
 # You can define your own callback function with custom progress reporting using:
 def custom_callback(downloaded, total):
     """This is an example of how you can implement the custom callback"""
+    if total:
+        percentage = (downloaded / total) * 100
+        print(f"Downloaded: {downloaded} / {total} bytes ({percentage:.2f}%)")
+    else:
+        print(f"Downloaded: {downloaded} bytes")
 
-    percentage = (downloaded / total) * 100
-    print(f"Downloaded: {downloaded} / {total} segments ({percentage:.2f}%)")
-
+video.download(quality=quality, path="./", callback=custom_callback)
 
 ```
 
-| Argument | Description                                  | possible values                         |
-|----------|----------------------------------------------|-----------------------------------------|
-| quality  | The video quality                            | `best` `half` `worst`                   |
-| mode     | The download mode of the video               | `AV1` `h264`                            |
-| path     | The output path of the video                 | Any `str` object                        |
-| callback | Custom callback function                     | Any function with (pos,total) structure |
-| no_title | The title will not be included into the path | `True` `False`                          |
+| Argument | Description                                          | possible values                                   |
+|----------|------------------------------------------------------|---------------------------------------------------|
+| quality  | The video quality                                    | `best` `half` `worst` or `720`/`"720p"`/`1080`     |
+| mode     | The download mode of the video                       | `Encoding.mp4_h264` `Encoding.av1`                |
+| path     | Output directory or full file path (see `no_title`)  | Any `str` object                                  |
+| callback | Custom callback function                             | Any function with (downloaded_bytes, total_bytes) |
+| no_title | Do not append the video title to `path`              | `True` `False`                                    |
+| use_workaround | Resolve redirect URL before download          | `True` `False`                                    |
 
 > [!NOTE]
 > For more information on the `quality` values, see [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
+
+Download uses the legacy downloader from `eaf_base_api` (streaming + resume, not threaded).
+If a partial file already exists at the output path, the download resumes via HTTP Range.
+If the server ignores Range, the download restarts from zero.
+
+To resume correctly, keep the same `path` and `no_title` settings you used for the initial download.
+Returns `True` on success, `False` on error.
+
+
+#### Cancellation
+You can cancel the download gracefully and from an external thread by using
+an Event.
+
+This works like this:
+
+```python
+import threading
+from threading import Event
+from eporner_api import Client
+
+event = Event()
+video = Client().get_video("")
+
+
+def download_video():
+  # Let's say you have this function where you download the video...
+  print(f"Downloading: {video.title}")
+  video.download(quality="something", stop_event=event)
+
+
+# Start downloading thread
+t = threading.Thread(target=download_video)
+t.start()
+
+# Now let's say you want to cancel the download
+event.set() # Cancels the download
+
+# This way you don't have to force kill the download which is great
+# if you use threading or run from Qt / Async
+```
 
 
 ## The Pornstar Object
@@ -185,14 +236,24 @@ for video in videos:
 
 > The Pornstar Object contains all information from the EPorner Pornstar page
 
+Note: Videos returned by `pornstar.videos(...)` are currently created with HTML scraping enabled by default.
+
 ## Searching for Videos
 You can search videos using 
 
 ```python
-from eporner_api import Client
+from eporner_api import Client, Gay, Order, LowQuality
 
 client = Client()
-videos = client.search_videos(query, etc...)
+videos = client.search_videos(
+    query="Mia Khalifa",
+    page=1,
+    per_page=20,
+    sorting_order=Order.top_rated,
+    sorting_gay=Gay.exclude_gay_content,
+    sorting_low_quality=LowQuality.exclude_low_quality_content,
+    enable_html_scraping=False,
+)
 
 for video in videos:
     print(video.title)
@@ -202,14 +263,15 @@ for video in videos:
 #### Arguments:
 
 - query: The search Query (str)
-- page: How many pages to iterate (int)
+- page: Page number (int, 1-based)
 - per_page: How many videos per page (int)
-- sorting_order: [Order](#order) Object
-- sorting_gay: [Gay](#gay) Object
-- sorting_low_quality: [Low Quality](#lowquality) Object
-- enable_html_scraping : [Important Notice](#important-notice)
+- sorting_order: [Order](#order) Object or string
+- sorting_gay: [Gay](#gay) Object or string
+- sorting_low_quality: [Low Quality](#lowquality) Object or string
+- enable_html_scraping: [Important Notice](#important-notice) (default: True)
 
 Returns a [Video](#video-object) Object (as a Generator)
+Note: `search_videos` fetches a single page. For multiple pages, call it in a loop.
 
 # Videos by Category
 
@@ -229,8 +291,12 @@ for video in videos:
 
 #### Arguments:
 
-- pages: Over how many pages to iterate. One page contains 63 videos
-- enable_html_scraping: If the returned Video objects should have html scraping enabled
+- category: Category enum or a slug string (e.g., "asian-porn")
+- videos_concurrency: Overrides BaseCore config (optional)
+- pages_concurrency: Overrides BaseCore config (optional)
+
+Note: `enable_html_scraping` is currently ignored here; videos returned by this iterator are created
+with HTML scraping enabled by default.
 
 
 # Locals

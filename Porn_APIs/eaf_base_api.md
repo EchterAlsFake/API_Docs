@@ -1,14 +1,19 @@
 # Documentation for EAF Base API
 > [!NOTE]
-> This documentation is NOT completed yet.
+> This documentation is NOT completed (and will never be) .
+
+
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 # Table of Contents
 - [Importing](#import)
 - [Logging and Debugging](#logging-and-debugging)
 - [Configuration](#configuration)
+- [Fetch behavior](#fetch-behavior)
+- [Downloads (HLS)](#downloads-hls)
 - [Using Proxies](#using-proxies)
 - [Kill Switch](#kill-switch-proxies)
-- [Errors / Exceptions]()
+- [Errors / Exceptions](#errors--exceptions)
 - [HTTP2 Support](#http2-support)
 - [User Agent cycling](#user-agent-cycling)
 
@@ -36,13 +41,13 @@ core = BaseCore()
 core.enable_logging(log_file="some_log_idk.log", level=logging.INFO)
 
 # There is also support for network logging like this:
-core.enable_logging(log_file="buff_x_bow.log", level=logging.INFO, log_ip="target_ip", log_port="target_port")
+core.enable_logging(log_file="buff_x_bow.log", level=logging.INFO, log_ip="target_ip", log_port=443)
 # This will send all logs to the given server + port. You need to set up a client that listens for incoming connections.
-# Logs will be sent to an endpoint `/log`, so make sure you have that.
-# Logs will be sent as a JSON object (`"message": message`)
+# Logs are sent via HTTPS POST to: https://<ip>:<port>/feedback
+# Logs are sent as a JSON object: {"message": "..."}
 ```
 
-I may improve logging in the future, as there is still stuff left to do. <
+I may improve logging in the future, as there is still stuff left to do.
 
 # Configuration
 
@@ -56,17 +61,33 @@ The following configuration options are available:
 - config.request_delay: Defines a delay for each request
 - config.max_retries  : Defines the number of retries for one network request, until it's considered as failed
 - config.timeout: How long to wait for a response from a website until trying next attempt
-- config.max_bandwidth_mb: A speed limit for network requests. For downloading this only works in default mode!
+- config.max_bandwidth_mb: A speed limit in MB/s when BaseCore reads the response body (not applied when get_response=True)
 - config.ffmpeg_path: The path to the ffmpeg executable (optional)
 - config.max_cache_items : The maximum number of items being cached. Higher numbers increase RAM usage
 - config.proxy : Your Proxy address
 - config.verify_ssl : Whether to verify SSL when doing network requests with a Proxy (Default: True)
+- config.locale: Sets the Accept-Language header (can affect site content/regexes)
 - config.use_http2: Whether to enable http2 support (enabled by default)
 - config.max_workers_download: How many workers to use for fetching segments in the threaded download mode
 - config.videos_concurrency: How many videos to fetch at the same time (Higher values can result in 429)
 - config.pages_concurrency: How many pages to fetch at the same time (Higher values can result in 429)
 
 For the default values, have a look in /modules/config.py > `RuntimeConfig` 
+
+# Fetch behavior
+`BaseCore.fetch(...)` supports request customization and a few special cases:
+
+- `method`, `headers`, `cookies`, `data`/`json`/`params`, `allow_redirects`
+- `404` returns an `httpx.Response` (used by iterators to stop paging); `410` raises `ResourceGone`
+- Text responses are cached by default; pass `save_cache=False` or `get_response=True` to bypass decoding/caching
+
+# Downloads (HLS)
+`BaseCore.download(...)` uses the threaded HLS downloader and supports resume/cancel.
+Key options include `max_workers_download`, `segment_state_path`, `segment_dir`, `start_segment`, `stop_event`,
+`return_report`, `cleanup_on_stop`, `keep_segment_dir`, `remux`, and `callback_remux`.
+
+Remux uses PyAV (`pip install av`) and is not supported on Termux.
+For full downloader and quality rules see `Porn_APIs/special_arguments.md`.
 
 # Using Proxies
 > [!IMPORTANT]
@@ -122,10 +143,14 @@ your use case. However, here's a quick documentation:
 | **`KillSwitch`**      | Raised when the Kill Switch is triggered due to an IP leak.                                                                                                  |
 | **`InvalidProxy`**    | Raised when the proxy is invalid or fails during an `httpx` request.                                                                                         |
 | **`UnknownError`**    | Raised by a general `except Exception` block. These should be reported via [GitHub Issues](https://github.com/EchterAlsFake/eaf_base_api/issues).            |
+| **`DownloadCancelled`** | Raised when a download is cancelled via a stop flag/event.                                                                                                   |
 | **`SegmentError`**    | Raised when an error occurs while processing a segment during video download.                                                                                |
 | **`NetworkingError`** | General networking error, usually caused by issues on your site. If you're sure it's not, [report it](https://github.com/EchterAlsFake/eaf_base_api/issues). |
 | **`ProxySSLError`**   | Raised when an invalid SSL certificate is used by the proxy server                                                                                           |
-| **`ResouceGone`**     | When trying to access a resource that doesn't exist anymore                                                                                                  |
+| **`ResourceGone`**    | When trying to access a resource that doesn't exist anymore                                                                                                  |
+| **`BotProtectionDetected`** | Raised when Cloudflare or similar bot protection is detected.                                                                                          |
+
+`fetch` can also raise `httpx.HTTPStatusError`, `httpx.RequestError`, and timeout errors on unrecoverable failures.
 
 # Http2 support
 All network requests through the `.fetch` method will use http2 by default.
@@ -133,12 +158,12 @@ If this is supported depends on the website. Some websites e.g., spankbang or mi
 support HTTP2 and thus giving a `403` error each time. The APIs for such websites
 have http2 disabled by default.
 
-If you want to disable http2 yourself, you can do so by setting `enable_http2 = False` in the [Configuration](#configuration).
+If you want to disable http2 yourself, you can do so by setting `config.use_http2 = False` in the [Configuration](#configuration).
 After that, you **NEED*** to reload the session e.g., call `core.initialize_session()`.
 
 
 # User Agent cycling
-In the current release, eaf_base_api will try to change the user agent if a error
-in the range between 500 and 600 e.g., `503` or `500` occurs. For this feature
+In the current release, eaf_base_api will try to change the user agent if a 403 occurs (one retry),
+or if a error in the range between 500 and 600 e.g., `503` or `500` occurs. For the 5xx cycle
 to work, you need to also install `fake_useragent` via `pip install fake_useragent`.
 Otherwise, it won't be cycled. This is OPTIONAL. 

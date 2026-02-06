@@ -3,56 +3,60 @@
 Since **base_api v2**, pass `quality` as a simple argument (no enum). Supports **labels** and **numeric targets**.
 
 ## Accepted values
-- `"best"` – highest available.
-- `"half"` – middle option after sorting by height.
-- `"worst"` – lowest available.
-- `1080`, `"1080"`, `"1080p"`, `720`, etc. – target video height.
+- `"best"` - highest available.
+- `"half"` - middle option after sorting by height and bandwidth.
+- `"worst"` - lowest available.
+- `1080`, `"1080"`, `"1080p"`, `720`, etc. - target video height.
 
 ## Numeric selection (short)
-1. Prefer the **highest height ≤ target** (e.g., target 720 with 1080/720/480 → **720**).
-2. If none ≤ target, pick the **closest by absolute difference**; on ties choose the **higher**.
+1. Prefer the **highest height <= target** (e.g., target 720 with 1080/720/480 -> **720**).
+2. If none <= target, pick the **closest by absolute difference**; ties go to the **higher** height.
 3. If multiple variants share the chosen height, prefer **higher bandwidth**, then **higher frame rate**.
-4. Missing `resolution` → try to infer from URI (e.g., `.../720p/...`); else fall back to **bandwidth** ordering.
+4. Missing `resolution` -> try to infer from URI (e.g., `/720p/`); if still unknown, fall back to **bandwidth** ordering.
 5. Audio-only and I-frame playlists are **ignored**.
+
+## Helpful utilities
+- `BaseCore.list_available_qualities(m3u8_url)` returns the detected heights.
+- `BaseCore.get_m3u8_by_quality(m3u8_url, quality)` resolves a master playlist to the chosen variant.
 
 ## Works for both HLS and direct-download
 The same rules apply when selecting HLS variants or matching CDN links.
 
 ## Examples
-- `quality="best"` → highest (e.g., 1080p over 720p).
-- `quality="half"` → for `[144, 240, 360, 720]` chooses **360**.
-- `quality="worst"` → lowest (e.g., 144p).
-- `quality=480` → **480** if present, else highest below (e.g., 360). If only above exist (e.g., 720/1080), pick the **closest** (→ 720).
+- `quality="best"` -> highest (e.g., 1080p over 720p).
+- `quality="half"` -> for `[144, 240, 360, 720]` chooses **360**.
+- `quality="worst"` -> lowest (e.g., 144p).
+- `quality=480` -> **480** if present, else highest below (e.g., 360). If only above exist (e.g., 720/1080), pick the closest (-> 720).
 
-# Downloader (threading mode)
+# Downloader (threaded mode)
 
-Long explanation:
+`threaded` is the default and only supported mode in current base_api releases. It downloads HLS segments in parallel and
+optionally remuxes to MP4.
 
-Videos on sites usually are either streamed through a direct video or through HLS streaming. HLS streaming basically splits
-videos into tiny fragments. Those fragments can be as tiny as one megabyte. This is done for multiple different resolutions, 
-and it allows for very efficient network handling and a variable bitrate, meaning that when you change the quality of the video, you don't
-have to reload the entire source.
+If you see `FFMPEG` or `default` in older docs, treat them as deprecated. For sequential behavior, set
+`max_workers_download=1` (either in config or as an argument).
 
-However, fetching these segments takes longer than downloading a RAW video, because we need to request each segment individually and
-then also pack them into one video. This is done by using threading. Basically, we have multiple "workers" which are trying to fetch
-segments and safe their index, so that we can keep a correct order. This allows for speeds as high as 115MB/s depending on the website.
-Although it leads to a higher CPU and RAM usage, because we keep the buffer in memory until we write it.
+## Threaded arguments (BaseCore.download)
+- `max_workers_download`: number of segment workers (default from config).
+- `remux`: True/False. Remux uses PyAV (`pip install av`) and is not supported on Termux.
+- `callback`: progress callback (pos, total).
+- `callback_remux`: progress callback during remux.
 
-`threaded`:
+## Resume and cancel
+- `segment_state_path`: path to a JSON state file. If it exists, the download resumes from it.
+- `segment_dir`: directory for segment files; defaults to `<path>.segments` when `segment_state_path` is set.
+- `start_segment`: offset for new downloads; ignored when resuming from state.
+- `stop_event`: `threading.Event`; when set, download cancels and raises `DownloadCancelled` unless `return_report=True`.
+- `cleanup_on_stop`: remove temp files on cancel (default True).
+- `keep_segment_dir`: keep segment files on cancel (default False).
+- `return_report`: return a dict (`status`, `total`, `downloaded`, `missing`, `missing_urls`, ...) instead of raising.
 
-This mode is the fastest threading mode. It, as above explained, uses different worker threads at the same time to fetch segments.
-This is the recommended option
+## Notes
+- If `segment_dir` is not set, segments are buffered in memory for faster assembly (higher RAM use).
+- State files are written on cancel or failure and removed after a successful download.
 
-`FFMPEG`:
-
-This mode uses the free and open-source tool [FFmpeg](https://ffmpeg.org), which can do all that automatically. It's slower but
-a lot more stable and has a 99.9% error-free guarantee. However, my focus is not on that, so it might not always work perfectly.
-
-`default`
-
-This mode does the same as `threaded`, but it doesn't use multiple workers. It just fetches one segment after the another.
-It's OK but considered legacy and outdated.
-
+## Legacy direct downloads
+For direct MP4 downloads, `BaseCore.legacy_download(...)` streams with resume via Range requests; no downloader switch required.
 
 
 

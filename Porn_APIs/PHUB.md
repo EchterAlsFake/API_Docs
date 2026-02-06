@@ -1,10 +1,14 @@
 # PHUB Documentation
 
-> - Version 4.7.8
-> - Author: [Johannes Habel](https://github.com/echteralsfake/), [Egsagon](https://github.com/Egsagon)
-> - Copyright (C) 2024-2025
-> - License: GPLv3
-> - Dependencies: eaf_base_api, rfc3986, h11, httpcore, idna, sniffio, m3u8, ffmpeg-progress-yield
+> - Name: phub
+> - Version: 4.8.9
+> - Description: An API for Pornhub
+> - Requires Python: >=3.9
+> - License: LGPL-3.0-only
+> - Authors: Egsagon (egsagon.git@gmail.com), Johannes Habel (EchterAlsFake@proton.me)
+> - Dependencies: eaf_base_api, m3u8, lxml
+> - Optional dependencies: av (py>=3.10), full = httpx[http2], httpx[socks]
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!NOTE]
 > PHUB works on Android with Kivy or PySide6 (or CLI) as a frontend. Just specify PHUB as a requirement
@@ -18,15 +22,21 @@
  
 # Table of Contents
 - [Installation](#installation)
-- [Initializing the Client](#client)
+- [Client](#client)
 - [Logging](#logging)
-- [The Video object](#get-a-video-object)
-- [Account](#the-account-)
+- [The Video Object](#the-video-object)
+  - [Downloading Videos](#downloading-videos)
+  - [Progress Callbacks](#progress-callbacks)
+  - [Remuxing Videos](#remuxing-videos)
+  - [Video Attributes](#video-attributes)
+- [The Account](#the-account)
+- [Get a User / Pornstar](#get-a-user--pornstar)
 - [Searching](#searching)
-- [Searching User's](#searching-users)
-- [Model / Users](#models--users)
-- [Proxy Support](#proxy-support)
+  - [Search Hubtraffic](#search-hubtraffic)
+- [Searching Users](#searching-users)
+- [Get a Playlist](#get-a-playlist)
 - [CLI Usage](#cli-usage)
+- [Proxy Support](#proxy-support)
 - [Caching](#caching)
 
 
@@ -38,6 +48,10 @@ $ `pip install phub`
 Or Install directly from `GitHub`
 
 `pip install git+https://github.com/EchterAlsFake/phub`
+
+Optional extras:
+`pip install phub[full]` # httpx http2/socks support
+`pip install phub[av]`   # PyAV remux support
 
 
 # Client
@@ -66,13 +80,22 @@ config.request_delay = 10
 core = BaseCore(config=config)
 core.enable_logging() # .... if you want to enable logging
 core.enable_kill_switch() # ... if you want to enable kill switch
-client = Client(core)
+client = Client(core=core)
 
 # New client object with your custom configuration applied
 ```
 
+Client options you may care about:
+- `email` / `password`: log in with a Pornhub account (creates `client.account`).
+- `language`: locale for requests and URLs (see `phub.literals.language`).
+- `login`: auto-login on init (default `True` if credentials are provided).
+- `bypass_geo_blocking`: fakes headers/IP to try bypassing region locks.
+- `change_title_language`: use page title based on the URL language.
+- `use_webmaster_api`: use Pornhub Webmasters API by default (`True`); set `False` for HTML-only parsing.
+- `core`: pass a custom `BaseCore` instance.
+
 # Logging
-Every class in PHUB has its own logger. You can the log level, a custom log file
+Every class in PHUB has its own logger. You can set the log level, a custom log file
 and even a network IP + Port to log to. It also supports logging to a server through a website.
 
 Almost all classes have a `.enable_logging` method. By default, only critical errors will be logged, which basically means that
@@ -81,7 +104,7 @@ nothing is logged xD.
 
 > [!NOTE]
 > This logger especially works on Android with default storage permissions, not requiring users
-> to give runtime permissions. Thefore you can use this API perfectly fine with Kivy / PySide6
+> to give runtime permissions. Therefore you can use this API perfectly fine with Kivy / PySide6
 
 You can change that. Here's an example of how it works.
 
@@ -100,7 +123,9 @@ user.enable_logging(log_file="some_file.log",
 # This example works for ALL classes.
 ```
 
-# The Video object
+Remote logs are sent as HTTPS POSTs to `https://<ip>:<port>/feedback` with JSON `{"message": "..."}`.
+
+# The Video Object
 You can fetch all videos on PornHub, except PornHub Premium videos. Those are currently not supported and will
 never be supported, even if you have PornHub Premium. (Legal reasons)
 
@@ -110,14 +135,17 @@ Here's a detailed example of how this works:
 
 ```python
 from phub import Client
+from base_api.modules.progress_bars import Callback
+import threading
 
 client = Client()
 video = client.get("https://www.pornhub.com/view_video.php?viewkey=66bf5d77adc5c") # example video
+video = client.get("66bf5d77adc5c") # viewkey also works
 
 # Methods
 video.enable_logging() # Enables Logging (See above)
 video.refresh() # Refreshes video attribute data
-video.fetch() # You don't need that usually. See code for more details...
+video.fetch("data@title") # Advanced: fetch a raw key from API/page
 video.favorite() # Marks or Unmarks the video as a favourite video (if logged in)
 video.watch_later() # Adds or removes the video from your watch later list
 video.like() # Like or Unlike the video (may not work idk, never tested it XD) 
@@ -126,34 +154,42 @@ video.download() # Downloads a video
 
 # Here's a detailed example for Video Downloading:
 print(f"Downloading {video.title}")
+stop_event = threading.Event()
 video.download(
   path="./", # The path to download the video to
-  downloader="threaded", # The "way" of downloading videos (Explanation below)
-  display=callback_function, # OPTIONAL! Custom callback (Explanation below)  
-  quality="best") # The video quality (best, half, worst) Should be self-explaining :D
+  quality="best", # The video quality (best/half/worst or numeric like 720)
+  callback=Callback.text_progress_bar, # OPTIONAL! Custom callback (pos, total)
+  stop_event=stop_event) # Optional cancellation (threading.Event)
 
 ```
+## Downloading Videos
+PHUB uses the threaded HLS downloader from `eaf_base_api`. Concurrency is controlled by
+`core.config.max_workers_download` (set it to `1` for sequential downloads).
 
-### Downloader
-PHUB uses different ways of fetching the video segments. The default one is:
+`Video.download(...)` supports resume/cancel and returns a report dict when `return_report=True`.
+If you cancel via `stop_event`, a `DownloadCancelled` exception is raised unless `return_report=True`.
 
-##### threaded
-The threaded downloader is a custom implementation and uses future and ThreadPool to download videos
-with up to 115 MB/s. It is insanely fast, has automatic error correction and is generally the way to go.
+| Argument   | Description                                          |
+|------------|------------------------------------------------------|
+| `quality`  | `best` `half` `worst` or numeric targets like `720`   |
+| `path`     | Output directory or full file path (see `no_title`)  |
+| `callback` | Custom callback function (pos, total)                |
+| `no_title` | Do not append the video title to `path`              |
+| `remux`    | Remux MPEG-TS to MP4 via PyAV                         |
+| `callback_remux` | Progress callback during remux                  |
+| `start_segment` | Start offset for new downloads                   |
+| `stop_event` | Cancel download when set                           |
+| `segment_state_path` | JSON state file for resume                  |
+| `segment_dir` | Directory for segment files                       |
+| `return_report` | Return a report dict instead of raising on cancel |
+| `cleanup_on_stop` | Remove temp files on cancel                   |
+| `keep_segment_dir` | Keep segment files on cancel                 |
 
+> [!NOTE]
+> For more information on the `quality` values, see [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
+> <br>When `no_title=True`, `path` should include the filename (including `.mp4`).
 
-##### default
-The Default downloader is pretty slow. It just fetches one segment after the other. 
-
-##### ffmpeg
-The ffmpeg mode uses as it says [ffmpeg](https://ffmpeg.org) to download videos by giving ffmpeg
-the master m3u8 URL with the segments. FFmpeg may be more stable in terms of downloading videos, but
-I do not recommend using it.
-
-FFmpeg needs to be either in your path and be accessible through `ffmpeg` or you give a custom path
-to ffmpeg using a custom config for eaf_base_api and a custom core object to the Client / Video 
-
-### Callback / Display
+## Progress Callbacks
 PHUB will give you progress reporting when downloading videos by returning the current amount
 of downloaded segments and the total amount of downloaded segments. By default, an internal made
 progressbar will be used. However, if you want to use your own progressbar you could do something
@@ -167,21 +203,25 @@ client = Client()
 def custom_progress_bar(current: int, total: int):
   print(f"Downloaded: {current} / {total}")
 
-client.get("some_video_idk").download(path="./", display=custom_progress_bar)
+client.get("some_video_idk").download(path="./", callback=custom_progress_bar)
   
 # There are also pre-made progressbars:
 
 from base_api.modules.progress_bars import Callback
-client.get("some_video_idk").download(path="./", display=Callback.text_progress_bar)
-client.get("some_video_idk").download(path="./", display=Callback.custom_callback)
-client.get("some_video_idk").download(path="./", display=Callback.animated_text_progress)
+client.get("some_video_idk").download(path="./", callback=Callback.text_progress_bar)
+client.get("some_video_idk").download(path="./", callback=Callback.custom_callback)
+client.get("some_video_idk").download(path="./", callback=Callback.animated_text_progress)
+
+# PHUB also ships simple display helpers:
+from phub.modules import display
+client.get("some_video_idk").download(path="./", callback=display.progress())
 
   ```
 
 This example can of course be easily extended with tqdm, rich or anything else.
 
 
-### Remuxing Videos (important)
+## Remuxing Videos
 Videos will by default be saved in MPEG-TS format, because that is
 what the website gives us. However, this may cause problems when playing
 with older video players, AND you can also not tag metadata to the 
@@ -189,14 +229,15 @@ files, because they miss a proper container.
 
 This can be fixed using remuxing the video. This only takes a few seconds
 and there's no quality loss. However, you need to install `av` for that.
+Remux is not supported on Termux.
 
-`pip installl av` # Which will also install FFmpeg bundles binaries
+`pip install phub[av]` (or `pip install av`)
 
 ```python
-from api_example import Client
+from phub import Client
 
 video = Client().get("url")
-video.download(quality="best", downloader="threaded", callback=Callback_function_here, path="./", 
+video.download(quality="best", callback=Callback_function_here, path="./", 
                remux=True, callback_remux=CallBackFunctionHere)
 
 # The remux mode has its own callback function which works the same as the above example,
@@ -205,7 +246,7 @@ video.download(quality="best", downloader="threaded", callback=Callback_function
 ```
 
 
-### Video Attributes
+## Video Attributes
 You can of course get a lot of information from each video. Basically everything you can see on
 a PornHub Video when you watch it through the website.
 
@@ -240,7 +281,7 @@ Here's a detailed table:
   
   </details>
 
-# The Account 
+# The Account
 You can log in to PornHub with your own account. 
 
 > [!WARNING]
@@ -272,7 +313,13 @@ for video in account.watched:
   
 for video in account.liked:
   print(video.title)
+
+# Other account helpers:
+account.subscriptions  # Iterator of subscribed users
+account.feed  # Account feed (experimental)
 ```
+
+If you initialize `Client()` without credentials, `client.account` will be `None`.
 
 # Get a User / Pornstar
 ```python
@@ -294,6 +341,8 @@ user.bio # The bio of the user
 user.info # The info of a user
 ```
 
+You can also pass a plain username (the client will try to resolve the user type automatically).
+
 # Searching
 
 ```python
@@ -302,11 +351,12 @@ from phub.literals import *
 
 client = Client()
 search = client.search(query="Your search query e.g., 'Fortnite gameplay'",
+                        production="professional",
                         category="a category e.g., 'french'",
-                        exclude_category="'amateur", # you can also give a list: ['amateur', 'amateur-gay']
+                        exclude_category="amateur", # you can also give a list: ['amateur', 'amateur-gay']
                         hd=True, # whether to search only for HD videos
                         sort='longuest',
-                       period="day" # Which period the videos were published on e.g., day, year, month
+                        period="day" # Which period the videos were published on e.g., day, year, month
                        )
 
 for video in search:
@@ -318,7 +368,8 @@ for video in search:
 
 ### Search Hubtraffic
 Works exactly like above, but searches PornHub's Hubtraffic API instead which is (maybe) much faster,
-but maybe not. Depends on my programming skills of one year ago lmao. It also allows for fewer filters. 
+but maybe not. Depends on my programming skills of one year ago lmao. It also allows for fewer filters
+and supports optional `tags`.
 
 ```python
 from phub import Client
@@ -326,8 +377,9 @@ from phub import Client
 client = Client()
 search = client.search_hubtraffic(query="Your search query e.g., 'Fortnite gameplay'",
                         category="a category e.g., 'french'",
-                        sort='longuest',
-                       period="day" # Which period the videos were published on e.g., day, year, month
+                        tags=["amateur", "hd"],
+                        sort='recent',
+                        period="week" # Which period the videos were published on e.g., week, month, all
                        )
 
 for video in search:
@@ -340,7 +392,7 @@ for video in search:
 > https://phub.readthedocs.io/en/latest/features/search.html#using-different-query-types-while-searching
 
 
-# Searching User's
+# Searching Users
 You can also search for PornHub users which can return Models and regular Users.
 
 ```python
@@ -354,7 +406,7 @@ users = client.search_user(username="Search for a username")
 
 #### Filters....
 
-The user object support so many filters, that I will just copy you the internal code documentation
+The user search supports so many filters, that I will just copy you the internal code documentation
 and that's it, because otherwise I would go crazy here.
 
 | Argument        | Type          | Description                                               |
@@ -382,7 +434,7 @@ and that's it, because otherwise I would go crazy here.
 > For a list of all possible options see `src/phub/literals.py`
 
 # Get a Playlist
-Works very simple, just like:
+Works very simple. You can pass a playlist URL or numeric ID:
 
 ```python
 from phub import Client
@@ -405,8 +457,8 @@ playlist.views # Views of the playlist
 ```
 
 # CLI Usage
-PHUB can be executed from the command line to instantly download videos. 
-You can just execute `phub` and it will show you a list of commands. 
+PHUB ships a CLI entry point: `phub`.
+Run `phub -h` to see the current options (URL/model/file input, output path, quality, and more).
 
 # Proxy Support
 Proxy support is NOT implemented in PHUB itself, but in its underlying network component: `eaf_base_api`
