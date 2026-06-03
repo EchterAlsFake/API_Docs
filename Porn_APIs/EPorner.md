@@ -1,384 +1,371 @@
 # EPorner Documentation
 
 > - Name: Eporner_API
-> - Version: 1.9.5
+> - Version: 2.0
 > - Description: A Python API for the Porn Site Eporner.com
 > - Requires Python: >=3.9
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
-> - Dependencies: bs4, eaf_base_api
-> - Optional dependencies: full = lxml, httpx[http2], httpx[socks]
-> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
+> - Dependencies: `bs4`, `eaf_base_api`
+> - Optional dependencies: `full` = `lxml` (faster parsing)
+> - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6)
 
 > [!IMPORTANT]
-> Before reading this documentation, you MUST read through this short documentation for the underlying API `eaf_base_api`. It's
-> an important core project of all my APIs. It's responsible for all configurations, proxies and logging.
-
-**Documentation -->:** https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md 
+> Before reading this documentation, you MUST read through the documentation for the underlying core API [eaf_base_api](file:///home/asuna/PycharmProjects/API_Docs/Porn_APIs/eaf_base_api.md). It is a core dependency responsible for configurations, connections, proxies, and logging.
 
 # Important Notice
-The ToS of Eporner.com clearly say that using scrapers / bots isn't allowed.
-<br>This API uses primarily the official Webmasters API which is in compliance to the ToS.
+The ToS of Eporner.com clearly state that using scrapers / bots is not allowed. This API primarily uses the official Webmasters API which complies with the ToS.
 
-<br>However, there are more features that can be enabled using the function parameters.
-<br>The function parameter is called `enable_html_scraping`. In current releases it defaults
-<br>to `True`. Set it to `False` if you want Webmasters-only access and ToS compliance.
-<br>Downloading videos and HTML-only fields (likes, dislikes, rating, thumbnail, source URL)
-<br>require `enable_html_scraping=True`.
+However, advanced features can be enabled using the function parameters. The parameter is called `enable_html_scraping` and it defaults to `True` in current releases. Set it to `False` if you want Webmasters-only access and ToS compliance. Note that downloading videos and retrieving HTML-only fields (likes, dislikes, rating, rating count, uploader, bitrate, source URL, thumbnail) require `enable_html_scraping=True`.
 
-If you are using this, you may face legal actions, so it's at your own risk!
+*If you use this, you do so at your own risk!*
 
 # Table of Contents
-
 - [Installation](#installation)
 - [The Client Object](#the-client-object)
-- [The Video Object](#video-object)
-  - [Video Information](#video-information)
-  - [Download a Video](#downloading-a-video)
+- [The Video Object](#the-video-object)
+  - [Video Attributes](#video-attributes)
+  - [Download a Video](#download-a-video)
+  - [Cancellation](#cancellation)
 - [The Pornstar Object](#the-pornstar-object)
 - [Searching for Videos](#searching-for-videos)
 - [Videos by Category](#videos-by-category)
-- [Locals](#locals)
+- [Enums & Sorting Layouts](#enums--sorting-layouts)
   - [Encoding](#encoding)
-- [Sorting](#sorting)
   - [Order](#order)
   - [Gay](#gay)
-  - [Low Quality](#lowquality)
+  - [Low Quality](#low-quality)
   - [Category](#category)
 - [Proxy Support](#proxy-support)
 - [Caching](#caching)
 
+
 # Installation
 
-Installation from `Pypi`:
+Installation from PyPI:
+```bash
+pip install eporner_api
+```
 
-$ `pip install eporner_api`
+Or install directly from GitHub:
+```bash
+pip install git+https://github.com/EchterAlsFake/EPorner_API
+```
 
-Or Install directly from `GitHub`
+Optional extras for faster HTML parsing:
+```bash
+pip install eporner_api[full]
+```
 
-`pip install git+https://github.com/EchterAlsFake/EPorner_API`
-
-Optional extras (faster parsing + extra httpx features):
-`pip install eporner_api[full]`
-
-> [!NOTE]
-> Installing from git may cause issues as I am not separating the master branch
-> from commits which could break thing unexpectedly!
 
 # The Client Object
-## Client
+
+The [Client](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L569) class manages connections, sessions, and serves as the main gateway to query videos, pornstars, and categories.
 
 ```python
 from eporner_api import Client
-client = Client()
 
-# If you want to apply a custom configuration for the BaseCore class, here you go:  
-# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+# Initialize default client
+client = Client()
+```
+
+If you want to apply custom configuration values for the underlying [BaseCore](file:///home/asuna/PycharmProjects/eaf_base_api/base_api/base.py#L834) network manager (such as proxies or request delays):
+
+```python
 from base_api.modules.config import config
 from base_api.base import BaseCore
+from eporner_api import Client
 
-# Change the values you like e.g.,
-config.request_delay = 10
+# Override configurations in config
+config.request_delay = 1.5
+config.timeout = 30
 
-# Apply the configuration
+# Initialize BaseCore with custom configurations
 core = BaseCore(config=config)
-core.enable_logging() # .... if you want to enable logging
-core.enable_kill_switch() # ... if you want to enable kill switch
-client = Client(core)
-# New client object with your custom configuration applied
+core.enable_logging()
+
+# Bind custom core to Client
+client = Client(core=core)
 ```
 
 > [!NOTE]
-> The client handles everything, and you should **ALWAYS** import and set it up!
+> The client handles everything and should **ALWAYS** be imported and set up first.
 
 
-# Video Object
-The video object has the following attributes:
+# The Video Object
+
+The [Video](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L105) object represents video details. Creating or downloading a video is fully asynchronous and must be executed in an async context.
 
 ```python
+import asyncio
 from eporner_api import Client, Encoding
 
-client = Client()
-video = client.get_video("<video_url>")  # enable_html_scraping defaults to True
-"""
-Set enable_html_scraping=False to use only the Webmasters API.
-Downloading videos and HTML-only fields require enable_html_scraping=True.
-"""
+async def main():
+    client = Client()
+    
+    # get_video is asynchronous and resolves a Video object
+    video = await client.get_video("https://www.eporner.com/video-XXXXXX/...", enable_html_scraping=True)
+    
+    # Access properties (cached properties)
+    print(video.title)
+    print(video.length_minutes)
+    
+    # Download the video asynchronously
+    success = await video.download(quality="best", path="./", mode=Encoding.mp4_h264)
+    print("Download finished. Status:", success)
 
-# Now you access video attributes like
-
-print(video.title)
-print(video.length)
-
-# etc...
-
-# Downloading a Video (HTML Scraping needs to be enabled!)
-
-video.download(quality="best", path="./", mode=Encoding.mp4_h264)
-
+asyncio.run(main())
 ```
-### Video Information
 
-> Webmasters API (always available)
-> - Video ID
-> - Tags
-> - Title
-> - Views
-> - Rate
-> - Publish Date
-> - Length (seconds)
-> - Length (minutes)
-> - Embed URL (to embed the video in a website)
->
-> HTML scraping (requires enable_html_scraping=True)
-> - Bitrate
-> - Source video URL (you probably never need this)
-> - Rating
-> - Rating Count
-> - Thumbnail
-> - Likes
-> - Dislikes
-> - Author / uploader
+### Video Attributes
+
+| Attribute | Source API | Description |
+| :--- | :--- | :--- |
+| **`video_id`** | Webmasters | Unique identifier string extracted from the video URL. |
+| **`title`** | Webmasters | Video title. |
+| **`tags`** | Webmasters | List of keywords/tags associated with the video. |
+| **`views`** | Webmasters | View count. |
+| **`rate`** | Webmasters | Video rating representation. |
+| **`publish_date`** | Webmasters | Video publication date. |
+| **`length`** | Webmasters | Duration in seconds. |
+| **`length_minutes`** | Webmasters | Duration in MM:SS format. |
+| **`embed_url`** | Webmasters | Iframe URL for embedding the video. |
+| **`bitrate`** | HTML Scraping | Bitrate of the stream (requires scraping). |
+| **`source_video_url`** | HTML Scraping | Underlying CDN MP4 file stream URL (requires scraping). |
+| **`rating`** | HTML Scraping | Rating value from 0 to 100 (requires scraping). |
+| **`rating_count`** | HTML Scraping | Total number of rating votes (requires scraping). |
+| **`thumbnail`** | HTML Scraping | Video cover image URL (requires scraping). |
+| **`likes`** | HTML Scraping | Total likes count (requires scraping). |
+| **`dislikes`** | HTML Scraping | Total dislikes count (requires scraping). |
+| **`author`** | HTML Scraping | The Uploader channel or Pornstar actor name (requires scraping). |
 
 ### Functions
-- direct_download_link(quality, mode) # Returns the direct download URL
-- download() # Downloads the video (legacy downloader)
+- **`video_qualities(mode=Encoding.mp4_h264) -> list:`** Returns a sorted list of integer resolutions available (e.g. `[240, 360, 720, 1080]`).
+- **`direct_download_link(quality: str | int, mode: str) -> str:`** Synchronously maps a requested quality (`best`, `half`, `worst`, or numerical resolution) to a direct CDN stream URL.
+- **`download(...) -> bool:`** Asynchronously downloads the video.
 
-### Downloading a Video
+### Download a Video
+
+You can pass a custom progress callback function to [download](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L407) to monitor progress:
 
 ```python
+import asyncio
 from eporner_api import Client
 
-video = Client().get_video("<some_url>")
-quality = "best"
-
-# You can define your own callback function with custom progress reporting using:
-def custom_callback(downloaded, total):
-    """This is an example of how you can implement the custom callback"""
-    if total:
-        percentage = (downloaded / total) * 100
-        print(f"Downloaded: {downloaded} / {total} bytes ({percentage:.2f}%)")
+def custom_callback(downloaded_bytes, total_bytes):
+    if total_bytes:
+        percent = (downloaded_bytes / total_bytes) * 100
+        print(f"Progress: {downloaded_bytes} / {total_bytes} bytes ({percent:.2f}%)")
     else:
-        print(f"Downloaded: {downloaded} bytes")
+        print(f"Downloaded: {downloaded_bytes} bytes")
 
-video.download(quality=quality, path="./", callback=custom_callback)
+async def main():
+    client = Client()
+    video = await client.get_video("https://www.eporner.com/video-XXXXXX/...")
+    
+    # Initiating async download
+    await video.download(
+        quality="1080",
+        path="./downloads/",
+        callback=custom_callback,
+        no_title=False,
+        use_workaround=True
+    )
 
+asyncio.run(main())
 ```
 
-| Argument | Description                                          | possible values                                   |
-|----------|------------------------------------------------------|---------------------------------------------------|
-| quality  | The video quality                                    | `best` `half` `worst` or `720`/`"720p"`/`1080`     |
-| mode     | The download mode of the video                       | `Encoding.mp4_h264` `Encoding.av1`                |
-| path     | Output directory or full file path (see `no_title`)  | Any `str` object                                  |
-| callback | Custom callback function                             | Any function with (downloaded_bytes, total_bytes) |
-| no_title | Do not append the video title to `path`              | `True` `False`                                    |
-| use_workaround | Resolve redirect URL before download          | `True` `False`                                    |
+| Argument | Type | Description |
+| :--- | :--- | :--- |
+| **`quality`** | `str` \| `int` | Quality selector. Accepts `"best"`, `"half"`, `"worst"`, or numerical target like `1080`, `"720p"`. |
+| **`path`** | `str` | Destination folder or full file path. |
+| **`callback`** | `function` | Progress callback receiving `(downloaded, total)`. |
+| **`mode`** | `str` | Video compression encoding. Use [Encoding](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/modules/locals.py#L11). |
+| **`no_title`** | `bool` | If `False` (default), appends the video title (e.g. `"<title>.mp4"`) to the target path. |
+| **`use_workaround`** | `bool` | If `True`, resolves redirected CDN links before triggering the file downloader. |
+| **`stop_event`** | `threading.Event` | Optional thread event used for cancellation. |
 
 > [!NOTE]
-> For more information on the `quality` values, see [Special Arguments](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/special_arguments.md)
+> Downloads utilize the legacy direct downloader from `eaf_base_api` which streams files and supports resume operations. If a partial file already exists at the output path, it resumes from that byte offset using HTTP Range requests.
 
-Download uses the legacy downloader from `eaf_base_api` (streaming + resume, not threaded).
-If a partial file already exists at the output path, the download resumes via HTTP Range.
-If the server ignores Range, the download restarts from zero.
+### Cancellation
 
-To resume correctly, keep the same `path` and `no_title` settings you used for the initial download.
-Returns `True` on success, `False` on error.
-
-
-#### Cancellation
-You can cancel the download gracefully and from an external thread by using
-an Event.
-
-This works like this:
+You can cancel an ongoing download gracefully from another thread or asyncio task by setting a `threading.Event`:
 
 ```python
+import asyncio
 import threading
-from threading import Event
 from eporner_api import Client
 
-event = Event()
-video = Client().get_video("")
+event = threading.Event()
 
+async def download_task(video):
+    success = await video.download(quality="best", path="./", stop_event=event)
+    print("Download result:", success)
 
-def download_video():
-  # Let's say you have this function where you download the video...
-  print(f"Downloading: {video.title}")
-  video.download(quality="something", stop_event=event)
+async def main():
+    client = Client()
+    video = await client.get_video("https://www.eporner.com/video-XXXXXX/...")
+    
+    # Start download task
+    task = asyncio.create_task(download_task(video))
+    
+    # Cancel download after 5 seconds
+    await asyncio.sleep(5)
+    print("Cancelling download...")
+    event.set()
+    
+    await task
 
-
-# Start downloading thread
-t = threading.Thread(target=download_video)
-t.start()
-
-# Now let's say you want to cancel the download
-event.set() # Cancels the download
-
-# This way you don't have to force kill the download which is great
-# if you use threading or run from Qt / Async
+asyncio.run(main())
 ```
 
 
-## The Pornstar Object
+# The Pornstar Object
 
-It's as simple as doing:
+Retrieve information about a performer's profile and iterate over their videos. Retrieving a performer and listing their videos is fully asynchronous:
 
 ```python
+import asyncio
 from eporner_api import Client
-client = Client()
-pornstar = client.get_pornstar("https://www.eporner.com/pornstar/riley-reid/", enable_html_scraping=True)
-videos = pornstar.videos(pages=2)
 
-# Now you can iterate through videos
+async def main():
+    client = Client()
+    
+    # get_pornstar is async
+    pornstar = await client.get_pornstar("https://www.eporner.com/pornstar/riley-reid/")
+    
+    print(pornstar.name)
+    print("Subscribers:", pornstar.subscribers)
+    print("Country:", pornstar.country)
+    print("Ethnicity:", pornstar.ethnicity)
+    print("Video Views:", pornstar.video_views)
+    
+    # pornstar.videos returns an AsyncGenerator. Iterate using 'async for':
+    async for video in pornstar.videos(pages=2):
+        print(video.title)
 
-for video in videos:
-    print(video.title) # or download them, etc...
+asyncio.run(main())
 ```
 
-> The Pornstar Object contains all information from the EPorner Pornstar page
+> [!NOTE]
+> [Pornstar.videos](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L451) yields [Video](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L105) objects. By default, these video objects are initialized with `enable_html_scraping=True`.
 
-Note: Videos returned by `pornstar.videos(...)` are currently created with HTML scraping enabled by default.
 
-## Searching for Videos
-You can search videos using 
+# Searching for Videos
+
+Perform video queries. The search yields an asynchronous generator of [Video](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L105) objects:
 
 ```python
-from eporner_api import Client, Gay, Order, LowQuality
+import asyncio
+from eporner_api import Client
+from eporner_api import Gay, Order, LowQuality
 
-client = Client()
-videos = client.search_videos(
-    query="Mia Khalifa",
-    page=1,
-    per_page=20,
-    sorting_order=Order.top_rated,
-    sorting_gay=Gay.exclude_gay_content,
-    sorting_low_quality=LowQuality.exclude_low_quality_content,
-    enable_html_scraping=False,
-)
+async def main():
+    client = Client()
+    
+    # search_videos is an AsyncGenerator
+    async for video in client.search_videos(
+        query="Mia Khalifa",
+        page=1,
+        per_page=20,
+        sorting_order=Order.top_rated,
+        sorting_gay=Gay.exclude_gay_content,
+        sorting_low_quality=LowQuality.exclude_low_quality_content,
+        enable_html_scraping=False
+    ):
+        print(video.title)
 
-for video in videos:
-    print(video.title)
-    # etc...
+asyncio.run(main())
 ```
 
-#### Arguments:
+### Arguments:
+- `query` (`str`): Keyword search query.
+- `page` (`int`): Page offset (1-based index).
+- `per_page` (`int`): Quantity of results per search page.
+- `sorting_order` ([Order](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/modules/sorting.py#L8) or `str`): Order sorting choice.
+- `sorting_gay` ([Gay](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/modules/sorting.py#L1) or `str`): Gay content filtering behavior.
+- `sorting_low_quality` ([LowQuality](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/modules/sorting.py#L19) or `str`): Filters HD / low quality content.
+- `enable_html_scraping` (`bool`): Enables metadata scraping (defaults to `True`).
 
-- query: The search Query (str)
-- page: Page number (int, 1-based)
-- per_page: How many videos per page (int)
-- sorting_order: [Order](#order) Object or string
-- sorting_gay: [Gay](#gay) Object or string
-- sorting_low_quality: [Low Quality](#lowquality) Object or string
-- enable_html_scraping: [Important Notice](#important-notice) (default: True)
-
-Returns a [Video](#video-object) Object (as a Generator)
-Note: `search_videos` fetches a single page. For multiple pages, call it in a loop.
 
 # Videos by Category
 
-You can also get Videos by a Category
+Retrieve videos listed under a specific category using an async generator:
 
 ```python
+import asyncio
 from eporner_api import Client, Category
 
-videos = Client().get_videos_by_category(category=Category.ASIAN) # or something else,
+async def main():
+    client = Client()
+    
+    # get_videos_by_category is an AsyncGenerator
+    async for video in client.get_videos_by_category(category=Category.ASIAN):
+        print(video.title)
 
-# INFO: You can also pass the category as a string like it would be in the url.
-
-for video in videos:
-  print(video.title)
-
+asyncio.run(main())
 ```
 
-#### Arguments:
-
-- category: Category enum or a slug string (e.g., "asian-porn")
-- videos_concurrency: Overrides BaseCore config (optional)
-- pages_concurrency: Overrides BaseCore config (optional)
-
-Note: `enable_html_scraping` is currently ignored here; videos returned by this iterator are created
-with HTML scraping enabled by default.
+### Arguments:
+- `category` ([Category](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/modules/locals.py#L16) enum or `str` category slug such as `"asian-porn"`).
+- `videos_concurrency` (`int`): Overrides the default concurrent video initialization limits.
+- `pages_concurrency` (`int`): Overrides the default concurrent page fetching limits.
 
 
-# Locals
+# Enums & Sorting Layouts
 
-## Encoding
+Sorting definitions, codec encodings, and categories are defined under `modules.locals` and `modules.sorting`.
 
-Videos on EPorner are available in AV1 and MP4 (H264) format.
-<br>I recommend MP4 (H264)
-
+### Encoding
+Videos on EPorner are provided in AV1 or MP4 format.
 ```python
-from eporner_api import locals
-encoding = locals.Encoding.mp4_h264 # Recommended!
-encoding = locals.Encoding.av1
+from eporner_api import Encoding
+
+Encoding.mp4_h264  # Recommended MP4 compression
+Encoding.av1       # AV1 compression
 ```
 
-# Sorting
-The sorting objects are needed for searching.
+### Order
+Sorting configurations:
+- `Order.latest` (Latest uploads)
+- `Order.longest` (Longest video duration first)
+- `Order.shortest` (Shortest video duration first)
+- `Order.top_rated` (Highest rating)
+- `Order.most_popular` (Most views)
+- `Order.top_weekly` (Weekly popular)
+- `Order.top_monthly` (Monthly popular)
 
-## Order
-- latest 
-- longest
-- shortest
-- top_rated
-- most_popular
-- top_weekly
-- top_monthly
-```python
-from eporner_api import sorting
+### Gay
+Gay content exclusions/inclusions:
+- `Gay.exclude_gay_content` (`"0"`)
+- `Gay.include_gay_content` (`"1"`)
+- `Gay.only_gay_content` (`"2"`)
 
-order = sorting.Order.latest
-# etc...
-```
+### Low Quality
+Low-quality filtering options:
+- `LowQuality.exclude_low_quality_content` (`"0"`)
+- `LowQuality.include_low_quality_content` (`"1"`)
+- `LowQuality.only_low_quality_content` (`"2"`)
 
-## Gay
-- exclude_gay_content
-- include_gay_content
-- only_gay_content
+### Category
+Standard slugs mapping:
+- `Category.ALL` (`"all"`)
+- `Category.AMATEUR` (`"amateur"`)
+- `Category.ANAL` (`"anal"`)
+- `Category.ASIAN` (`"asian-porn"`)
+- `Category.ASMR` (`"asmr"`)
+- `Category.MILF` (`"milf"`)
+- `Category.VR_PORN` (`"vr-porn"`)
+- *(Refer to [locals.py](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/modules/locals.py#L16) for the full list of categories).*
 
-```python
-from eporner_api import sorting
-
-gay = sorting.Gay.exclude_gay_content
-# etc...
-```
-
-
-## LowQuality
-- exclude_low_quality_content
-- include_low_quality_content
-- only_low_quality_content
-
-```python
-from eporner_api import sorting
-
-quality_sorting = sorting.LowQuality.exclude_low_quality_content
-# etc...
-```
-
-## Category
-
-All categories are in the Category class.
-```python
-
-from eporner_api import locals
-locals.Category.AMATEUR
-locals.Category.ASMR 
-
-# etc...
-```
 
 # Proxy Support
-Proxy support is NOT implemented in eporner_api itself, but in its underlying network component: `eaf_base_api`
-<br>Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies
+Proxy parameters are not configured in `eporner_api` directly, but in the underlying network stack: `eaf_base_api`.
+Refer to the [Base API Configuration Documentation](file:///home/asuna/PycharmProjects/API_Docs/Porn_APIs/eaf_base_api.md#configuration) to configure proxy parameters.
+
 
 # Caching
-All network requests (UTF-8 responses) are cached inside the base_api.
-If you want to configure this behaviour, please see:
-<br>https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md
+All HTML requests and search results are cached using the underlying [BaseCore](file:///home/asuna/PycharmProjects/eaf_base_api/base_api/base.py#L834) cache. Duplicate URL requests will load cached versions rather than querying EPorner servers again.
 
-Most objects such as the `Video` attributes are cached, meaning that if you
-fetch the same video once again, your system will automatically display the cached
-values and won't newly fetch everything.
-
-You can see if an object is cached when at the top of the function name, there is a
-`cached_property` decorator (in the code)
+Most of the attributes on the [Video](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L105) and [Pornstar](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L434) classes are decorated as `cached_property` descriptors, meaning they are resolved once on first access and cached locally in the instance memory.
