@@ -227,6 +227,7 @@ import asyncio
 
 async def main():
     video = await Client().get_video("url")
+    await video.ensure_html() # Fetch HTML (only needed if you want to download the video)
     await video.download(quality="best", path="./", 
                    remux=True)
 
