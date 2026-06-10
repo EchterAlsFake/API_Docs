@@ -13,12 +13,6 @@
 > [!NOTE]
 > PHUB works on Android with Kivy or PySide6 as a frontend. Just specify PHUB as a requirement
 > in buildozer.
-
-> [!IMPORTANT]
-> While this documentation is more up to date than the other one it's still not finished. PHUB is such
-> a complex API with so many features to offer that both I and Egsagon forgot what we already added and what not.
-> Sometimes it's just better to look at the code yourself :joy:
-
  
 # Table of Contents
 - [Installation](#installation)
