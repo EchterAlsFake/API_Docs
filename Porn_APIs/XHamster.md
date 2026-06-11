@@ -1,13 +1,13 @@
 # XHamster API Documentation
 
 > - Name: xhamster_api
-> - Version: 1.7.2
+> - Version: 2.1
 > - Description: A Python API for the Porn Site xhamster.com
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
-> - Dependencies: bs4, eaf_base_api, m3u8
-> - Optional dependencies: av (Python >=3.10), full = lxml, httpx[http2], httpx[socks]
+> - Dependencies: bs4, demjson3, eaf_base_api, m3u8
+> - Optional dependencies: av, full = lxml
 > - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
@@ -45,7 +45,7 @@ $ `pip install git+https://github.com/EchterAlsFake/xhamster_api`
 
 Optional extras:
 - `pip install xhamster_api[full]` (lxml + httpx extras)
-- `pip install xhamster_api[av]` (PyAV for remuxing, Python >=3.10)
+- `pip install xhamster_api[av]` (PyAV for remuxing)
 
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
@@ -54,31 +54,44 @@ Optional extras:
 # Client
 
 ```python
+import asyncio
 from xhamster_api import Client
-client = Client()
 
-# If you want to apply a custom configuration for the BaseCore class, here you go:
-# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
-from base_api.modules.config import RuntimeConfig
-from base_api.base import BaseCore
+async def main():
+    client = Client()
 
-# Change the values you like e.g.,
-cfg = RuntimeConfig()
-cfg.request_delay = 10
+    # If you want to apply a custom configuration for the BaseCore class, here you go:
+    # You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+    from base_api.modules.config import RuntimeConfig
+    from base_api.base import BaseCore
 
-# Apply the configuration
-core = BaseCore(config=cfg)
-core.enable_logging()  # Enable logging if you want
-core.enable_kill_switch()  # Enable kill switch if you want
-client = Client(core=core)
-# New client object with your custom configuration applied
+    # Change the values you like e.g.,
+    cfg = RuntimeConfig()
+    cfg.request_delay = 10
+
+    # Apply the configuration
+    core = BaseCore(config=cfg)
+    core.enable_logging()  # Enable logging if you want
+    core.enable_kill_switch()  # Enable kill switch if you want
+    client = Client(core=core)
+    # New client object with your custom configuration applied
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Get a video object
 
 ```python
+import asyncio
 from xhamster_api import Client
-video = Client().get_video(url="<video_url>")
+
+async def main():
+    video = await Client().get_video(url="<video_url>")
+    print(video.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 <details>
@@ -97,8 +110,9 @@ video = Client().get_video(url="<video_url>")
 ## Download a video
 
 ```python
-from xhamster_api import Client
+import asyncio
 import threading
+from xhamster_api import Client
 
 def custom_callback(downloaded, total):
     """Example callback for progress updates."""
@@ -108,20 +122,24 @@ def custom_callback(downloaded, total):
     else:
         print(f"Downloaded: {downloaded} bytes")
 
-client = Client()
-video = client.get_video("<video_url>")
-stop_event = threading.Event()
+async def main():
+    client = Client()
+    video = await client.get_video("<video_url>")
+    stop_event = threading.Event()
 
-video.download(
-    quality="best",
-    path="./downloads",
-    callback=custom_callback,
-    remux=True,
-    stop_event=stop_event,
-    segment_state_path="./downloads/xhamster.state.json",
-)
+    await video.download(
+        quality="best",
+        path="./downloads",
+        callback=custom_callback,
+        remux=True,
+        stop_event=stop_event,
+        segment_state_path="./downloads/xhamster.state.json",
+    )
 
-# From another thread, call stop_event.set() to cancel the download.
+    # From another thread, call stop_event.set() to cancel the download.
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 | Argument | Options/Description |
@@ -151,27 +169,31 @@ Use `segment_state_path` to resume HLS downloads. If `stop_event` is set and `re
 # Searching
 
 ```python
+import asyncio
 from xhamster_api import Client
 
-client = Client()
-results = client.search_videos(
-    query="cosplay",
-    minimum_quality="1080p",
-    sort_by="newest",           # "" = relevance
-    category=["vintage", "lesbian"],
-    vr=False,
-    full_length_only=True,
-    min_duration="10",
-    date="monthly",
-    production="studios",
-    fps="60",
-    pages=2,
-    videos_concurrency=10,
-    pages_concurrency=2,
-)
+async def main():
+    client = Client()
+    
+    async for video in client.search_videos(
+        query="cosplay",
+        minimum_quality="1080p",
+        sort_by="newest",           # "" = relevance
+        category=["vintage", "lesbian"],
+        vr=False,
+        full_length_only=True,
+        min_duration="10",
+        date="monthly",
+        production="studios",
+        fps="60",
+        pages=2,
+        videos_concurrency=10,
+        pages_concurrency=2,
+    ):
+        print(video.title)
 
-for video in results:
-    print(video.title)
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Filters:
@@ -191,39 +213,51 @@ Filters:
 Shorts are called Moments on XHamster.
 
 ```python
+import asyncio
 from xhamster_api import Client
-client = Client()
-short = client.get_short("<short_url>")
 
-title = short.title
-likes = short.likes
-author = short.author
+async def main():
+    client = Client()
+    short = await client.get_short("<short_url>")
 
-short.download(quality="best", path="./shorts")
+    title = short.title
+    likes = short.likes
+    author = short.author
+
+    await short.download(quality="best", path="./shorts")
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Short attributes:
-- `title`, `author`, `likes`, `m3u8_base_url`
+- `title`, `author`, `likes`, `dislikes`, `views`, `comments`, `duration`, `video_id`, `created_at`, `tags`, `author_subscribers`, `author_logo`, `author_link`, `thumb_url`, `poster_url`, `m3u8_base_url`
 - `get_segments(quality)` and `download(...)` work like the video object.
 
 # Channels, Pornstars, Creators
 Channels, Pornstars, and Creators share the same attributes and behavior.
 
 ```python
+import asyncio
 from xhamster_api import Client
-client = Client()
 
-pornstar = client.get_pornstar("<url>")
-channel = client.get_channel("<url>")
-creator = client.get_creator("<url>")
+async def main():
+    client = Client()
 
-print(pornstar.name, pornstar.videos_count)
+    pornstar = await client.get_pornstar("<url>")
+    channel = await client.get_channel("<url>")
+    creator = await client.get_creator("<url>")
 
-for video in pornstar.videos(pages=2):
-    print(video.title)
+    print(pornstar.name, pornstar.videos_count)
 
-for short in pornstar.get_shorts(pages=1):
-    print(short.title)
+    async for video in pornstar.videos(pages=2):
+        print(video.title)
+
+    async for short in pornstar.get_shorts(pages=1):
+        print(short.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Shared attributes:

@@ -1,13 +1,13 @@
 # XVideos API Documentation
 
 > - Name: xvideos_api
-> - Version: 1.8.2
+> - Version: 2.2
 > - Description: A Python API for the Porn Site xvideos.com
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api, m3u8
-> - Optional dependencies: av (Python >=3.10), full = lxml, httpx[http2], httpx[socks]
+> - Optional dependencies: av (Python >=3.10), full = lxml
 > - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
@@ -21,6 +21,7 @@
 > This API is against the Terms of Services of `xvideos.com`. Usage is at your risk.
 > I (the Author) am NOT liable for damages caused by misuse of this API package!
 
+
 ## Table of Contents
 - [Installation](#installation)
 - [Client](#client)
@@ -30,6 +31,7 @@
 - [Pornstars](#pornstars)
 - [Channels](#channels)
 - [Playlists](#playlists)
+- [Account / Login](#account--login)
 - [Remuxing videos](#remuxing-videos)
 - [Proxy Support](#proxy-support)
 - [Exceptions](#exceptions)
@@ -56,31 +58,45 @@ Optional extras:
 # Client
 
 ```python
+import asyncio
 from xvideos_api import Client
-client = Client()
 
-# If you want to apply a custom configuration for the BaseCore class, here you go:
-# You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
-from base_api.modules.config import RuntimeConfig
-from base_api.base import BaseCore
+async def main():
+    client = Client()
 
-# Change the values you like e.g.,
-cfg = RuntimeConfig()
-cfg.request_delay = 10
+    # If you want to apply a custom configuration for the BaseCore class, here you go:
+    # You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
+    from base_api.modules.config import RuntimeConfig
+    from base_api.base import BaseCore
 
-# Apply the configuration
-core = BaseCore(config=cfg)
-core.enable_logging()  # Enable logging if you want
-core.enable_kill_switch()  # Enable kill switch if you want
-client = Client(core=core)
-# New client object with your custom configuration applied
+    # Change the values you like e.g.,
+    cfg = RuntimeConfig()
+    cfg.request_delay = 10
+
+    # Apply the configuration
+    core = BaseCore(config=cfg)
+    core.enable_logging()  # Enable logging if you want
+    core.enable_kill_switch()  # Enable kill switch if you want
+    client = Client(core=core)
+    # New client object with your custom configuration applied
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Get a video object
 
 ```python
+import asyncio
 from xvideos_api import Client
-video = Client().get_video(url="<video_url>")
+
+async def main():
+    client = Client()
+    video = await client.get_video(url="<video_url>")
+    print(video.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 <details>
@@ -117,8 +133,9 @@ Notes:
 ## Download a video
 
 ```python
-from xvideos_api import Client
+import asyncio
 import threading
+from xvideos_api import Client
 
 def custom_callback(downloaded, total):
     """Example callback for progress updates."""
@@ -128,20 +145,24 @@ def custom_callback(downloaded, total):
     else:
         print(f"Downloaded: {downloaded} bytes")
 
-client = Client()
-video = client.get_video("<video_url>")
-stop_event = threading.Event()
+async def main():
+    client = Client()
+    video = await client.get_video("<video_url>")
+    stop_event = threading.Event()
 
-video.download(
-    quality="best",
-    path="./downloads",
-    callback=custom_callback,
-    remux=True,
-    stop_event=stop_event,
-    segment_state_path="./downloads/xvideos.state.json",
-)
+    await video.download(
+        quality="best",
+        path="./downloads",
+        callback=custom_callback,
+        remux=True,
+        stop_event=stop_event,
+        segment_state_path="./downloads/xvideos.state.json",
+    )
 
-# From another thread, call stop_event.set() to cancel the download.
+    # From another thread, call stop_event.set() to cancel the download.
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 | Argument | Options/Description |
@@ -174,29 +195,42 @@ This fallback uses the legacy downloader, which does not use `stop_event`.
 
 ## Basic Search
 ```python
+import asyncio
 from xvideos_api import Client
 
-client = Client()
-videos = client.search("Mia Khalifa", pages=2)
+async def main():
+    client = Client()
+    search = client.search("Mia Khalifa", pages=2)
+    
+    async for video in search:
+        print(video.title)
 
-for video in videos:
-    print(video.title)
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Using Filters
 ```python
+import asyncio
 from xvideos_api import Client
 from xvideos_api import sorting
 
-client = Client()
-videos = client.search(
-    query="Mia Khalifa",
-    pages=5,
-    sorting_sort=sorting.Sort.Sort_relevance,
-    sorting_date=sorting.SortDate.Sort_all,
-    sorting_time=sorting.SortVideoTime.Sort_short,
-    sort_quality=sorting.SortQuality.Sort_720p,
-)
+async def main():
+    client = Client()
+    search = client.search(
+        query="Mia Khalifa",
+        pages=5,
+        sorting_sort=sorting.Sort.Sort_relevance,
+        sorting_date=sorting.SortDate.Sort_all,
+        sorting_time=sorting.SortVideoTime.Sort_short,
+        sort_quality=sorting.SortQuality.Sort_720p,
+    )
+    
+    async for video in search:
+        print(video.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Sorting options:
@@ -208,13 +242,18 @@ Sorting options:
 # Pornstars
 
 ```python
+import asyncio
 from xvideos_api import Client
 
-client = Client()
-pornstar = client.get_pornstar("<pornstar_url>")
+async def main():
+    client = Client()
+    pornstar = await client.get_pornstar("<pornstar_url>")
 
-for video in pornstar.videos(pages=2):
-    print(video.title)
+    async for video in pornstar.videos(pages=2):
+        print(video.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Pornstar attributes (availability depends on profile):
@@ -240,13 +279,18 @@ Pornstar attributes (availability depends on profile):
 # Channels
 
 ```python
+import asyncio
 from xvideos_api import Client
 
-client = Client()
-channel = client.get_channel("<channel_url>")
+async def main():
+    client = Client()
+    channel = await client.get_channel("<channel_url>")
 
-for video in channel.videos(pages=2):
-    print(video.title)
+    async for video in channel.videos(pages=2):
+        print(video.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 Channel attributes (availability depends on profile):
@@ -269,14 +313,69 @@ Channel attributes (availability depends on profile):
 
 # Playlists
 ```python
+import asyncio
 from xvideos_api import Client
 
-client = Client()
-playlist = client.get_playlist(url="<playlist_url>", pages=2)
+async def main():
+    client = Client()
+    playlist = client.get_playlist(url="<playlist_url>", pages=2)
 
-for video in playlist:
-    print(video.title)
+    async for video in playlist:
+        print(video.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+# Account / Login
+The API provides an `Account` class to access user-specific pages such as Liked, Watched, or Recommended videos.
+
+To use these features, you must first provide your login cookies in `xvideos_api.consts.cookies` like so:
+
+```python
+from xvideos_api.modules import consts
+
+consts.cookies = {
+    "session_token": "<token>",
+    "session_token_auth": "<token>"
+}
+```
+
+Then you can get the `Account` object and start scraping:
+
+```python
+import asyncio
+from xvideos_api import Client
+from xvideos_api.modules import consts
+
+# Provide the login cookies
+consts.cookies = {
+    "session_token": "your_token",
+    "session_token_auth": "your_auth_token"
+}
+
+async def main():
+    client = Client()
+    account = client.get_account()
+
+    # Get liked videos
+    async for video in account.get_liked_videos(pages=2):
+        print(video.title)
+
+    # Get recommended videos
+    async for video in account.get_recommended_videos(pages=2):
+        print(video.title)
+        
+    # Get watch later videos
+    async for video in account.get_watch_later_videos(pages=2):
+        print(video.title)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+> [!NOTE]
+> All search, channels, pornstars, and account video iterators accept `videos_concurrency` and `pages_concurrency` arguments if you want to override the base configurations for scraping parallelization.
 
 # Remuxing videos
 HLS videos are saved as MPEG-TS and then renamed to `.mp4`. Some players have trouble with this
@@ -291,9 +390,14 @@ Proxy support is not implemented in xvideos_api itself, but in its underlying ne
 Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/eaf_base_api.md) to enable proxies.
 
 # Exceptions
-- `InvalidUrl`, `VideoUnavailable`, `InvalidPornstar`: Raised by the XVideos API for invalid URLs or missing content.
+The following exceptions may be raised by the library:
+- `InvalidUrl`: Raised for invalid video URLs.
+- `InvalidPornstar`: Raised for invalid pornstar URLs.
+- `NotFound`: Raised if a requested resource is unavailable (e.g. 404).
+- `NoLoginCookies`: Raised if `Account` features are used without providing cookies.
+- `NetworkError`, `ProxyError`, `UnknownNetworkError`: Network or Proxy connection issues.
+- `BotDetection`: Raised if the target site blocks the request via bot protection.
 - `DownloadCancelled`: Raised when `stop_event` is set (unless `return_report=True`).
-- `NetworkingError`, `InvalidProxy`, `KillSwitch`, `BotProtectionDetected`: Raised by `eaf_base_api` for network/proxy issues.
 
 # Caching
 All network requests (UTF-8 responses) are cached inside the base_api.

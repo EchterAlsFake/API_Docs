@@ -1,13 +1,13 @@
 # missAV API Documentation
 
 > - Name: missAV_api
-> - Version: 1.4.9
+> - Version: 2.1
 > - Description: A Python API for the Porn Site missav.ws
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api, m3u8
-> - Optional dependencies: av (py>=3.10), full = lxml, httpx[http2], httpx[socks]
+> - Optional dependencies: av (py>=3.10), full = lxml
 > - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
@@ -77,8 +77,14 @@ client = Client(core)
 ### Get a video object
 
 ```python
+import asyncio
 from missav_api import Client
-video = Client().get_video(url="<video_url>")
+
+async def main():
+    client = Client()
+    video = await client.get_video(url="<video_url>")
+
+asyncio.run(main())
 ```
 
 | Attribute     | Returns | is cached? |
@@ -97,21 +103,26 @@ video = Client().get_video(url="<video_url>")
 ### Download a video
 
 ```python
-from missav_api import Client, Callback
+import asyncio
 import threading
-client = Client()
-video = client.get_video("<video_url>")
-quality = "best" 
+from missav_api import Client, Callback
 
-stop_event = threading.Event()
-video.download(quality=quality, path="./", callback=Callback.text_progress_bar, stop_event=stop_event)
+async def main():
+    client = Client()
+    video = await client.get_video("<video_url>")
+    quality = "best" 
 
-# You can define your own callback function with custom progress reporting using:
-def custom_callback(downloaded, total):
-    """This is an example of how you can implement the custom callback"""
+    stop_event = threading.Event()
+    await video.download(quality=quality, path="./", callback=Callback.text_progress_bar, stop_event=stop_event)
 
-    percentage = (downloaded / total) * 100
-    print(f"Downloaded: {downloaded} / {total} segments ({percentage:.2f}%)")
+    # You can define your own callback function with custom progress reporting using:
+    def custom_callback(downloaded, total):
+        """This is an example of how you can implement the custom callback"""
+
+        percentage = (downloaded / total) * 100
+        print(f"Downloaded: {downloaded} / {total} segments ({percentage:.2f}%)")
+
+asyncio.run(main())
 ```
 
 | Argument   | Description                                          | possible values                                    |
@@ -151,15 +162,20 @@ Remux is not supported on Termux.
 `pip install av`
 
 ```python
-from missav_api import Client
+import asyncio
+from missav_api import Client, Callback
 
-video = Client().get_video("url")
-video.download(quality="best", callback=Callback_function_here, path="./", 
-               remux=True, callback_remux=CallBackFunctionHere)
+async def main():
+    client = Client()
+    video = await client.get_video("url")
+    await video.download(quality="best", callback=Callback.text_progress_bar, path="./", 
+                   remux=True, callback_remux=Callback.text_progress_bar)
 
-# The remux mode has its own callback function which works the same as the above example,
-# taking pos and total as an input, however you might not really see progress, because
-# it's very fucking fast.
+    # The remux mode has its own callback function which works the same as the above example,
+    # taking pos and total as an input, however you might not really see progress, because
+    # it's very fucking fast.
+
+asyncio.run(main())
 ```
 
 # Searching
@@ -167,17 +183,19 @@ video.download(quality="best", callback=Callback_function_here, path="./",
 > Searching uses Missav's API and not webscraping!
 
 ```python
+import asyncio
 from missav_api import Client
-client = Client()
-video_results = client.search(query="<your_search_query>", video_count=50, max_workers=20)
 
-for video in video_results:
-    print(video.title)
+async def main():
+    client = Client()
+    async for video in client.search(query="<your_search_query>", video_count=50):
+        print(video.title)
+
+asyncio.run(main())
 ```
 
 - `query`: The search term to use 
 - `video_count`: The amount of videos to fetch
-- `max_workers`: The amount of workers for creating video objects (defaults to BaseCore config)
 
 # Proxy Support
 Proxy support is NOT implemented in missav_api itself, but in its underlying network component: `eaf_base_api`

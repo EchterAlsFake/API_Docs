@@ -1,13 +1,13 @@
 # Porntrex API Documentation
 
 > - Name: porntrex_api
-> - Version: 1.1
+> - Version: 1.5
 > - Description: A Python API for the Porn Site xvideos.com
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api, json5
-> - Optional dependencies: full = lxml, httpx[http2], httpx[socks]
+> - Optional dependencies: full = lxml
 > - Homepage: https://github.com/EchterAlsFake/porntrex_api
 > - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
@@ -53,33 +53,42 @@ Optional extras (faster parsing + extra httpx features):
 ## Client
 
 ```python
+import asyncio
 from porntrex_api import Client
-client = Client()
 
 # If you want to apply a custom configuration for the BaseCore class, here you go:  
 # You don't have to do that, it's only if you want to change the configuration of eaf_base_api!
 from base_api.modules.config import config
 from base_api.base import BaseCore
 
-# Change the values you like e.g.,
-config.request_delay = 10
+async def main():
+    # Change the values you like e.g.,
+    config.request_delay = 10
 
-# Apply the configuration
-core = BaseCore(config=config)
-core.enable_logging() # .... if you want to enable logging
-core.enable_kill_switch() # ... if you want to enable kill switch
-client = Client(core=core)
-# New client object with your custom configuration applied
+    # Apply the configuration
+    core = BaseCore(config=config)
+    core.enable_logging() # .... if you want to enable logging
+    core.enable_kill_switch() # ... if you want to enable kill switch
+    client = Client(core=core)
+    # New client object with your custom configuration applied
+
+asyncio.run(main())
 ```
 
 > [!NOTE]
 > The client handles everything, and you should **ALWAYS** import and set it up!
+> **This API is entirely asynchronous**, so you need to `await` its network-related functions.
 
 ### Get a video object
 
 ```python
+import asyncio
 from porntrex_api import Client
-video = Client().get_video(url="<video_url>")
+
+async def main():
+    video = await Client().get_video(url="<video_url>")
+
+asyncio.run(main())
 ```
 
 <details>
@@ -95,8 +104,9 @@ video = Client().get_video(url="<video_url>")
   | .categories               |  list   |    Yes     |  
   | .thumbnail                |   str   |    Yes     |
   | .publish_date             |   str   |    Yes     |
-  | .video_qualities()         |  list   |     No     |
-  | .direct_download_urls()    |  list   |     No     |
+  | .video_qualities          |  list   |    Yes     |
+  | .video_qualities_int()    |  list   |     No     |
+  | .direct_download_urls()   |  list   |     No     |
   | .video_id                 |   str   |    Yes     |
   | .license_code             |   str   |    Yes     |
   | .lrc                      |   str   |    Yes     |
@@ -109,14 +119,16 @@ video = Client().get_video(url="<video_url>")
 
 ### Downloading a Video:
 ```python
+import asyncio
+import threading
 from porntrex_api import Client
 from base_api.modules.progress_bars import Callback
-import threading
 
-client = Client()
-video = client.get_video("...")
-stop_event = threading.Event()
-video.download(quality="best", path="./", callback=Callback.text_progress_bar, stop_event=stop_event) 
+async def main():
+    client = Client()
+    video = await client.get_video("...")
+    stop_event = threading.Event()
+    await video.download(quality="best", path="./", callback=Callback.text_progress_bar, stop_event=stop_event) 
  
 # Custom Callback Example
 def custom_callback(downloaded, total):
@@ -124,6 +136,8 @@ def custom_callback(downloaded, total):
 
     percentage = (downloaded / total) * 100
     print(f"Downloaded: {downloaded} bytes / {total} bytes ({percentage:.2f}%)")
+
+asyncio.run(main())
 ```
 
 | Argument   | Description                                  | possible values                              |
@@ -148,19 +162,23 @@ A model and a channel are nearly the same with a little exception on the Thumbna
 expose the same attributes and work the same way. You can fetch them like this:
 
 ```python
+import asyncio
 from porntrex_api import Client
 
-client = Client()
-model = client.get_model("<model_url_here>")
-channel = client.get_channel("<channel_url_here>")
+async def main():
+    client = Client()
+    model = await client.get_model("<model_url_here>")
+    channel = await client.get_channel("<channel_url_here>")
 
-print(model.name) # Prints the name (same for channel)
-print(model.image) # Prints the URLs of the avatar image (same for channel)
-print(model.information) # Returns the information from the information tab in dictionary form (same for channel)
+    print(model.name) # Prints the name (same for channel)
+    print(model.image) # Prints the URLs of the avatar image (same for channel)
+    print(model.information) # Returns the information from the information tab in dictionary form (same for channel)
 
-# Get videos
-for video in channel.videos(): # See parameters below (works the same for Models)
-    print(video.title) # Returns a Video object like above
+    # Get videos
+    async for video in channel.videos(): # See parameters below (works the same for Models)
+        print(video.title) # Returns a Video object like above
+
+asyncio.run(main())
 ```
 
 ###### Parameters (.videos())
@@ -168,21 +186,24 @@ for video in channel.videos(): # See parameters below (works the same for Models
 - videos_concurrency: (int), default = 5. How many threads to use to fetch videos at the same time once a page is scraped
 - pages_concurrency: (int), default = 2. How many pages to scrape for video URLs at the same time (lower values recommended!)
 
-Returns: [Generator -> Video]
+Returns: [AsyncGenerator -> Video]
 
 
 # Searching
 Searching is as simple as the rest.
 
 ```python
+import asyncio
 from porntrex_api import Client
 
-client = Client()
-search_results = client.search(query="<your_search_query>") # Returns Generator of videos
+async def main():
+    client = Client()
+    search_results = client.search(query="<your_search_query>") # Returns AsyncGenerator of videos
 
-for video in search_results:
-    print(video.title)
+    async for video in search_results:
+        print(video.title)
 
+asyncio.run(main())
 ```
 ###### Parameters (.search())
 - query: (str), Your search query e.g., stepmom or whatever you want to search for.
@@ -190,7 +211,7 @@ for video in search_results:
 - videos_concurrency: (int), default = 5. How many threads to use to fetch videos at the same time once a page is scraped
 - pages_concurrency: (int), default = 2. How many pages to scrape for video URLs at the same time (lower values recommended!)
 
-Returns: [Generator -> Video]
+Returns: [AsyncGenerator -> Video]
 
 
 # Proxy Support
