@@ -1,7 +1,7 @@
 # PHUB Documentation
 
 > - Name: phub
-> - Version: 5.0.0
+> - Version: 5.1.0
 > - Description: An API for Pornhub
 > - Requires Python: >=3.10
 > - License: LGPL-3.0-only
@@ -50,6 +50,15 @@ Or Install directly from `GitHub`
 Optional extras:
 `pip install phub[full]` # lxml support for faster parsing
 `pip install phub[av]`   # PyAV remux support
+
+
+# CLI Usage
+> [!TIP]
+> You can run PHUB directly as a CLI tool using:
+
+`phub [OPTIONS]`
+
+For the exact usage, refer to the [CLI Documentation](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/CLI_PHUB.md)
 
 
 # Client
@@ -142,13 +151,11 @@ async def main():
     video = await client.get_video("https://www.pornhub.com/view_video.php?viewkey=66bf5d77adc5c") # example video
     
     # Methods
-    video.enable_logging() # Enables Logging (See above)
-    await video.refresh() # Refreshes video attribute data
-    # video.fetch("data@title") # Advanced: fetch a raw key from API/page
-    
+    video.enable_logging() # Enables Logging (See above)    
     # Here's a detailed example for Video Downloading:
     print(f"Downloading {video.title}")
-    stop_event = threading.Event()
+    stop_event = asyncio.Event()
+    await video.ensure_html() # If you want to download, fetch HTML manually
     await video.download(
       path="./", # The path to download the video to
       quality="best", # The video quality (best/half/worst or numeric like 720)
@@ -201,6 +208,7 @@ async def main():
       print(f"Downloaded: {current} / {total}")
 
     video = await client.get_video("some_video_idk")
+    await video.ensure_html()
     await video.download(path="./", callback=custom_progress_bar)
 
 asyncio.run(main())
@@ -227,7 +235,7 @@ import asyncio
 
 async def main():
     video = await Client().get_video("url")
-    await video.ensure_html() # Fetch HTML (only needed if you want to download the video)
+    await video.ensure_html()
     await video.download(quality="best", path="./", 
                    remux=True)
 
