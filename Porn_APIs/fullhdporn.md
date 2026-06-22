@@ -2,7 +2,7 @@
 
 > - Name: fullhdporn_api
 > - Description: A Python API for the Porn Site fullhdporn.sex
-> - Requires Python: >=3.10
+> - Requires Python: >=3.12
 > - License: GPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api, curl_cffi
@@ -44,6 +44,11 @@ Optional extras:
 > [!NOTE]
 > Installing from git may cause issues as I am not separating the master branch
 > from commits which could break things unexpectedly!
+
+
+> [!CAUTION]
+> Downloading videos only works if you have played the video in your browser before with the same IP address!
+
 
 # Client
 

@@ -3,7 +3,7 @@
 > - Name: xfreehd_api
 > - Version: 1.4.1
 > - Description: A Python API for the Porn Site xvideos.com
-> - Requires Python: >=3.10
+> - Requires Python: >=3.12
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api

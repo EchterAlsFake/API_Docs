@@ -3,7 +3,7 @@
 > - Name: missAV_api
 > - Version: 2.1
 > - Description: A Python API for the Porn Site missav.ws
-> - Requires Python: >=3.10
+> - Requires Python: >=3.12
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api, m3u8

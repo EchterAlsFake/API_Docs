@@ -3,7 +3,7 @@
 > - Name: phub
 > - Version: 5.1.0
 > - Description: An API for Pornhub
-> - Requires Python: >=3.10
+> - Requires Python: >=3.12
 > - License: LGPL-3.0-only
 > - Authors: Egsagon (egsagon.git@gmail.com), Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: eaf_base_api, m3u8, demjson3, bs4
