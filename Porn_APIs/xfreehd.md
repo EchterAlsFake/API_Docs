@@ -1,13 +1,13 @@
 # XFreeHD API Documentation
 
 > - Name: xfreehd_api
-> - Version: 1.2
+> - Version: 1.4.1
 > - Description: A Python API for the Porn Site xvideos.com
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api
-> - Optional dependencies: full = lxml, httpx[http2], httpx[socks]
+> - Optional dependencies: full = lxml
 > - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
@@ -73,7 +73,13 @@ client = Client(core)
 
 ```python
 from xfreehd_api import Client
-video = Client().get_video(url="<video_url>")
+import asyncio
+
+async def main():
+    client = Client()
+    video = await client.get_video(url="<video_url>")
+
+asyncio.run(main())
 ```
 
 <details>
@@ -92,6 +98,7 @@ video = Client().get_video(url="<video_url>")
 | .author       |   str   |    Yes     |
 | .cdn_urls     |  list   |    Yes     |
 | .thumbnail    |   str   |    Yes     |
+| .video_qualities | list |    Yes     |
 
 Notes:
 - `cdn_urls` contains direct MP4 links (SD/HD when available).
@@ -103,6 +110,7 @@ Notes:
 ```python
 from xfreehd_api import Client
 import threading
+import asyncio
 
 def custom_callback(downloaded, total):
     """Example callback for progress updates."""
@@ -112,18 +120,21 @@ def custom_callback(downloaded, total):
     else:
         print(f"Downloaded: {downloaded} bytes")
 
-client = Client()
-video = client.get_video("<video_url>")
-stop_event = threading.Event()
+async def main():
+    client = Client()
+    video = await client.get_video("<video_url>")
+    stop_event = threading.Event()
 
-video.download(
-    quality="hd",
-    path="./downloads",
-    callback=custom_callback,
-    stop_event=stop_event,
-)
+    await video.download(
+        quality="hd",
+        path="./downloads",
+        callback=custom_callback,
+        stop_event=stop_event,
+    )
 
-# From another thread, call stop_event.set() to cancel the download.
+    # From another thread, call stop_event.set() to cancel the download.
+
+asyncio.run(main())
 ```
 
 | Argument   | Options/Description |
@@ -143,15 +154,19 @@ When `stop_event` is set, the download is cancelled and a partial file is kept f
 # Albums
 ```python
 from xfreehd_api import Client
+import asyncio
 
-client = Client()
-album = client.get_album("<album_url>")
+async def main():
+    client = Client()
+    album = await client.get_album("<album_url>")
 
-all_images = album.get_all_images()  # Return a list of all image URLs of that album
-images_by_page = album.get_images_by_page(page=2)  # Returns a list of image URLs for a specific page
+    all_images = await album.get_all_images()  # Return a list of all image URLs of that album
+    images_by_page = await album.get_images_by_page(page=2)  # Returns a list of image URLs for a specific page
 
-total_pages = album.total_pages_count
-title = album.title
+    total_pages = album.total_pages_count
+    title = album.title
+
+asyncio.run(main())
 ```
 
 Notes:
@@ -164,7 +179,7 @@ Please see [Base API Configuration](https://github.com/EchterAlsFake/API_Docs/bl
 
 # Exceptions
 
-- `NetworkingError`, `InvalidProxy`, `KillSwitch`, `BotProtectionDetected`: Raised by `eaf_base_api` during fetches.
+- `NetworkError`, `ProxyError`, `BotDetection`, `UnknownNetworkError`, `NotFound`: Raised by `xfreehd_api` during fetches (these wrap exceptions from `eaf_base_api` and handle 404s).
 - `download()` catches exceptions internally and returns `False` on error.
 
 # Caching

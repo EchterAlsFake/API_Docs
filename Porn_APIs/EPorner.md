@@ -3,7 +3,7 @@
 > - Name: Eporner_API
 > - Version: 2.0
 > - Description: A Python API for the Porn Site Eporner.com
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: `bs4`, `eaf_base_api`
@@ -28,6 +28,7 @@ However, advanced features can be enabled using the function parameters. The par
   - [Download a Video](#download-a-video)
   - [Cancellation](#cancellation)
 - [The Pornstar Object](#the-pornstar-object)
+  - [Pornstar Attributes](#pornstar-attributes)
 - [Searching for Videos](#searching-for-videos)
 - [Videos by Category](#videos-by-category)
 - [Enums & Sorting Layouts](#enums--sorting-layouts)
@@ -72,11 +73,12 @@ client = Client()
 If you want to apply custom configuration values for the underlying [BaseCore](file:///home/asuna/PycharmProjects/eaf_base_api/base_api/base.py#L834) network manager (such as proxies or request delays):
 
 ```python
-from base_api.modules.config import config
+from base_api.modules.config import RuntimeConfig
 from base_api.base import BaseCore
 from eporner_api import Client
 
-# Override configurations in config
+# Override configurations in RuntimeConfig
+config = RuntimeConfig()
 config.request_delay = 1.5
 config.timeout = 30
 
@@ -242,7 +244,7 @@ async def main():
     print("Video Views:", pornstar.video_views)
     
     # pornstar.videos returns an AsyncGenerator. Iterate using 'async for':
-    async for video in pornstar.videos(pages=2):
+    async for video in pornstar.videos(pages=2, videos_concurrency=10, pages_concurrency=3):
         print(video.title)
 
 asyncio.run(main())
@@ -250,6 +252,31 @@ asyncio.run(main())
 
 > [!NOTE]
 > [Pornstar.videos](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L451) yields [Video](file:///home/asuna/PycharmProjects/EPorner_API/eporner_api/eporner_api.py#L105) objects. By default, these video objects are initialized with `enable_html_scraping=True`.
+
+### Pornstar Attributes
+
+| Attribute | Description |
+| :--- | :--- |
+| **`name`** | Name of the pornstar. |
+| **`subscribers`** | Number of subscribers. |
+| **`picture`** | URL to the pornstar picture. |
+| **`photos_amount`** | Amount of photos. |
+| **`video_amount`** | Amount of videos. |
+| **`pornstar_rank`** | Ranking on EPorner. |
+| **`profile_views`** | Profile views count. |
+| **`video_views`** | Video views count. |
+| **`photo_views`** | Photo views count. |
+| **`country`** | Country of origin. |
+| **`age`** | Age of the pornstar. |
+| **`ethnicity`** | Ethnicity. |
+| **`eye_color`** | Eye color. |
+| **`hair_color`** | Hair color. |
+| **`height`** | Height. |
+| **`weight`** | Weight. |
+| **`cup`** | Cup size. |
+| **`measurements`** | Body measurements. |
+| **`aliases`** | List of known aliases. |
+| **`biography`** | Text biography. |
 
 
 # Searching for Videos
@@ -301,7 +328,7 @@ async def main():
     client = Client()
     
     # get_videos_by_category is an AsyncGenerator
-    async for video in client.get_videos_by_category(category=Category.ASIAN):
+    async for video in client.get_videos_by_category(category=Category.ASIAN, videos_concurrency=10, pages_concurrency=3):
         print(video.title)
 
 asyncio.run(main())

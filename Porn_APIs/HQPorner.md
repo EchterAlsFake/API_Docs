@@ -1,13 +1,13 @@
 # HQPorner API Documentation
 
 > - Name: hqporner_api
-> - Version: 2.0
+> - Version: 2.1
 > - Description: A Python API for the Porn Site HQPorner.com
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api
-> - Optional dependencies: full = lxml, httpx[http2], httpx[socks]
+> - Optional dependencies: full = lxml
 > - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
@@ -78,8 +78,13 @@ client = Client(core)
 ### Get a video object
 
 ```python
+import asyncio
 from hqporner_api import Client
-video = Client().get_video(url="<video_url>")
+
+async def main():
+    video = await Client().get_video(url="<video_url>")
+
+asyncio.run(main())
 ```
 
 <details>
@@ -92,9 +97,9 @@ video = Client().get_video(url="<video_url>")
   | .length                  |   str   |    Yes     |
   | .publish_date            |   str   |    Yes     |
   | .tags                    |  list   |    Yes     |
-  | .video_qualities         |  list   |    Yes     |
-  | .direct_download_urls()  |  list   |     No     |
-  | .get_thumbnails()        |  list   |     No     |
+  | await .video_qualities   |  list   |    Yes     |
+  | await .direct_download_urls() |  list   |     No     |
+  | await .get_thumbnails()  |  list   |     No     |
   
   ### Thumbnails
   
@@ -107,14 +112,9 @@ video = Client().get_video(url="<video_url>")
 ### Download a video
 
 ```python
+import asyncio
 from hqporner_api import Client
 import threading
-client = Client()
-video = client.get_video("<video_url>")
-quality = "best" # Best quality as an example
-
-# By default, all videos are downloaded to the current working directory.
-# You can change this by specifying an output path:
 
 # Custom Callback
 
@@ -127,11 +127,21 @@ def custom_callback(downloaded, total):
     else:
         print(f"Downloaded: {downloaded} bytes")
 
-stop_event = threading.Event()
+async def main():
+    client = Client()
+    video = await client.get_video("<video_url>")
+    quality = "best" # Best quality as an example
+    
+    # By default, all videos are downloaded to the current working directory.
+    # You can change this by specifying an output path:
+    
+    stop_event = threading.Event()
+    
+    await video.download(quality=quality, path="your_path_here", callback=custom_callback, stop_event=stop_event)
+    
+    # From another thread, call stop_event.set() to cancel the download.
 
-video.download(quality=quality, path="your_path_here", callback=custom_callback, stop_event=stop_event)
-
-# From another thread, call stop_event.set() to cancel the download.
+asyncio.run(main())
 ```
 
 | Argument   | Options/Description                                                                                                                                                                     |
@@ -154,27 +164,36 @@ On success, `download()` returns `True`.
 ### Get videos by actress
 
 ```python
+import asyncio
 from hqporner_api import Client
 
-actress_object = Client().get_videos_by_actress("<actress-name>", pages=5) # or URL
-# You can also enter an actress URl e.g., hqporner.com/actress/...
+async def main():
+    actress_object = Client().get_videos_by_actress("<actress-name>", pages=5) # or URL
+    # You can also enter an actress URl e.g., hqporner.com/actress/...
+    
+    # You can now iterate through all videos from an actress:
+    
+    async for video in actress_object:
+        print(video.title)
+    
+    # This will include the amount of pages you requested.
 
-# You can now iterate through all videos from an actress:
-
-for video in actress_object:
-    print(video.title)
-
-# This will include the amount of pages you requested.
+asyncio.run(main())
 ```
 
 ### Get videos by category
 
 ```python
+import asyncio
 from hqporner_api import Client, Category
-videos = Client().get_videos_by_category(Category.POV, pages=5) # example category
 
-for video in videos:
-    print(video.title)
+async def main():
+    videos = Client().get_videos_by_category(Category.POV, pages=5) # example category
+    
+    async for video in videos:
+        print(video.title)
+
+asyncio.run(main())
 
 """
 All attributes of the Category class can be found in locals.py
@@ -189,19 +208,32 @@ The Category can also be a string. e.g Category.BIG_TITS would be equivalent to 
 ### Search for videos
 
 ```python
+import asyncio
 from hqporner_api import Client
-videos = Client().search_videos(query="Search Query", pages=5)
 
-for video in videos:
-    print(video.title)
+async def main():
+    videos = Client().search_videos(query="Search Query", pages=5)
+    
+    async for video in videos:
+        print(video.title)
+
+asyncio.run(main())
 ```
 
 ### Get top porn
 
 ```python
+import asyncio
 from hqporner_api import Client
 from hqporner_api import Sort
-top_porn = Client().get_top_porn(sort_by=Sort.WEEK, pages=5) # example sorting 
+
+async def main():
+    top_porn = Client().get_top_porn(sort_by=Sort.WEEK, pages=5) # example sorting 
+    
+    async for video in top_porn:
+        print(video.title)
+
+asyncio.run(main())
 
 """
 Sort:
@@ -215,21 +247,39 @@ Sort:
 
 ### Get all categories
 ```python
+import asyncio
 from hqporner_api import Client
-categories = Client().get_all_categories() # Returns a list with all possible categories
-# These are slug strings and can be passed to get_videos_by_category(category=...)
+
+async def main():
+    categories = await Client().get_all_categories() # Returns a list with all possible categories
+    # These are slug strings and can be passed to get_videos_by_category(category=...)
+
+asyncio.run(main())
 ```
 
 ### Get random video
 ```python
+import asyncio
 from hqporner_api import Client
-random_video = Client().get_random_video() # Returns a random video object
+
+async def main():
+    random_video = await Client().get_random_video() # Returns a random video object
+
+asyncio.run(main())
 ```
 
 ### Get brazzers videos
 ```python
+import asyncio
 from hqporner_api import Client
-brazzers_videos = Client().get_brazzers_videos(pages=5) # Returns brazzers videos (generator)
+
+async def main():
+    brazzers_videos = Client().get_brazzers_videos(pages=5) # Returns brazzers videos (generator)
+    
+    async for video in brazzers_videos:
+        print(video.title)
+
+asyncio.run(main())
 ```
 
 # Proxy Support
@@ -240,12 +290,20 @@ Proxy support is NOT implemented in hqporner_api itself, but in its underlying n
 
 Custom exceptions that can be raised:
 
-| Exception       | Reason                                           |
-|-----------------|--------------------------------------------------|
-| InvalidActress  | Raised when an invalid actress was given         |
-| NotAvailable    | Raised when a video is not available             |
-| WeirdError      | Raised when thumbnails cannot be found in search |
-| ThumbnailError  | Raised when a thumbnail can't be fetched         |
+| Exception             | Reason                                                            |
+|-----------------------|-------------------------------------------------------------------|
+| InvalidActress        | Raised when an invalid actress was given                          |
+| NotAvailable          | Raised when a video is not available                              |
+| WeirdError            | Raised when thumbnails cannot be found in search                  |
+| ThumbnailError        | Raised when a thumbnail can't be fetched                          |
+| InvalidCategory       | Raised when an invalid category was given                         |
+| NoVideosFound         | Raised when no videos were found                                  |
+| InvalidURL            | Raised when an invalid URL was given                              |
+| NotFound              | Raised when a 404 is encountered                                  |
+| NetworkError          | General network error                                             |
+| BotDetection          | Raised when Cloudflare/bot protection is detected                 |
+| ProxyError            | Raised when proxy is invalid                                      |
+| UnknownNetworkError   | Unknown network error                                             |
 
 # Caching
 All network requests (UTF-8 responses) are cached inside the base_api.

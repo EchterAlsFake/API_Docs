@@ -1,13 +1,13 @@
 # Spankbang API Documentation
 
 > - Name: spankbang_api
-> - Version: 2.0
+> - Version: 2.2
 > - Description: A Python API for the Porn Site spankbang.com
-> - Requires Python: >=3.9
+> - Requires Python: >=3.10
 > - License: LGPL-3.0-only
 > - Author: Johannes Habel (EchterAlsFake@proton.me)
 > - Dependencies: bs4, eaf_base_api, m3u8
-> - Optional dependencies: av (Python >=3.10), full = lxml, httpx[http2], httpx[socks]
+> - Optional dependencies: av (Python >=3.10), full = lxml
 > - Supported Platforms: Windows, Linux, macOS, iOS (Jailbroken), Android (Kotlin, Kivy, PySide6) 
 
 > [!IMPORTANT]
@@ -84,8 +84,14 @@ client = Client(core=core)
 ## Get a video object
 
 ```python
+import asyncio
 from spankbang_api import Client
-video = Client().get_video(url="<video_url>")
+
+async def main():
+    client = Client()
+    video = await client.get_video(url="<video_url>")
+
+asyncio.run(main())
 ```
 
 <details>
@@ -103,7 +109,7 @@ video = Client().get_video(url="<video_url>")
 | .m3u8_base_url           |   str    |    Yes     |
 | .direct_download_urls   |   list   |    Yes     |
 | .video_qualities        |   list   |    Yes     |
-| .get_segments(quality)  |   list   |     No     |
+| await .get_segments(quality)  |   list   |     No     |
 
 Notes:
 - `direct_download_urls` are the direct MP4 links used by the legacy downloader.
@@ -114,6 +120,7 @@ Notes:
 ## Download a video
 
 ```python
+import asyncio
 from spankbang_api import Client
 import threading
 
@@ -125,20 +132,23 @@ def custom_callback(downloaded, total):
     else:
         print(f"Downloaded: {downloaded} bytes")
 
-client = Client()
-video = client.get_video("<video_url>")
-stop_event = threading.Event()
+async def main():
+    client = Client()
+    video = await client.get_video("<video_url>")
+    stop_event = threading.Event()
 
-video.download(
-    quality="best",
-    path="./downloads",
-    callback=custom_callback,
-    remux=True,
-    stop_event=stop_event,
-    segment_state_path="./downloads/spankbang.state.json",
-)
+    await video.download(
+        quality="best",
+        path="./downloads",
+        callback=custom_callback,
+        remux=True,
+        stop_event=stop_event,
+        segment_state_path="./downloads/spankbang.state.json",
+    )
 
-# From another thread, call stop_event.set() to cancel the download.
+    # From another thread, call stop_event.set() to cancel the download.
+
+asyncio.run(main())
 ```
 
 | Argument | Options/Description |
@@ -179,33 +189,43 @@ Install PyAV:
 `pip install spankbang_api[av]`
 
 ```python
+import asyncio
 from spankbang_api import Client
 
-video = Client().get_video("<video_url>")
-video.download(
-    quality="best",
-    path="./downloads",
-    remux=True,
-)
+async def main():
+    client = Client()
+    video = await client.get_video("<video_url>")
+    await video.download(
+        quality="best",
+        path="./downloads",
+        remux=True,
+    )
+
+asyncio.run(main())
 ```
 
 # Searching
 You can search for videos on Spankbang and receive the results directly as Video objects.
 
 ```python
+import asyncio
 from spankbang_api import Client
 
-client = Client()
-search_results = client.search(
-    query="<your search query>",
-    filter="trending",
-    quality="fhd",
-    duration="20",
-    date="w",
-    pages=2,
-    videos_concurrency=10,
-    pages_concurrency=2,
-)
+async def main():
+    client = Client()
+    async for video in client.search(
+        query="<your search query>",
+        filter="trending",
+        quality="fhd",
+        duration="20",
+        date="w",
+        pages=2,
+        videos_concurrency=10,
+        pages_concurrency=2,
+    ):
+        print(video.title)
+
+asyncio.run(main())
 ```
 
 Arguments:
@@ -224,17 +244,21 @@ Arguments:
 You can fetch channel, pornstar, or creator pages and iterate their videos.
 
 ```python
+import asyncio
 from spankbang_api import Client
 
-client = Client()
-channel = client.get_channel("https://www.spankbang.com/channel/<name>/")
-pornstar = client.get_pornstar("https://www.spankbang.com/pornstar/<name>/")
-creator = client.get_creator("https://www.spankbang.com/model/<name>/")
+async def main():
+    client = Client()
+    channel = await client.get_channel("https://www.spankbang.com/channel/<name>/")
+    pornstar = await client.get_pornstar("https://www.spankbang.com/pornstar/<name>/")
+    creator = await client.get_creator("https://www.spankbang.com/model/<name>/")
 
-print(channel.name, channel.video_count)
+    print(channel.name, channel.video_count)
 
-for video in channel.videos(pages=1):
-    print(video.title)
+    async for video in channel.videos(pages=1):
+        print(video.title)
+
+asyncio.run(main())
 ```
 
 Shared attributes:
@@ -247,7 +271,7 @@ Shared attributes:
 | .subscribers_count | str | Yes |
 | .image | str | Yes |
 
-`.videos(pages=0, videos_concurrency=None, pages_concurrency=None)` yields Video objects.
+`.videos(pages=0, videos_concurrency=None, pages_concurrency=None)` asynchronously yields Video objects.
 
 # Proxy Support
 Spankbang uses the proxy support from `eaf_base_api`. Configure proxies via `BaseCore` or `RuntimeConfig`.

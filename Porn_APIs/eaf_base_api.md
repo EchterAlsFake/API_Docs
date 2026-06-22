@@ -12,6 +12,7 @@ The [eaf_base_api](file:///home/asuna/PycharmProjects/eaf_base_api/) library pro
 - [Logging and Debugging](#logging-and-debugging)
 - [Configuration](#configuration)
 - [Fetch Behavior & Core Features](#fetch-behavior--core-features)
+- [Concurrent Iteration & Error Handling](#concurrent-iteration--error-handling)
 - [HLS Downloader (Threaded Mode)](#hls-downloader-threaded-mode)
 - [Legacy Direct Downloader](#legacy-direct-downloader)
 - [Filename and String Utilities](#filename-and-string-utilities)
@@ -26,7 +27,7 @@ To import the core scraper interface, [BaseCore](file:///home/asuna/PycharmProje
 ```python
 import asyncio
 from base_api import BaseCore
-from base_api.modules.config import config
+from base_api.mzvodules.config import config
 
 async def main():
     # Use the default config or update options as needed
@@ -129,6 +130,39 @@ Some platforms present custom browser calculation challenges (such as the Pornhu
 ### 4. Status Codes Handling
 - **`404 Not Found`**: Returns the response object immediately (indicates the end of paginated iterators).
 - **`410 Gone`**: Raises [ResourceGone](file:///home/asuna/PycharmProjects/eaf_base_api/base_api/modules/errors.py#L102) immediately. Do not retry.
+
+
+# Concurrent Iteration & Error Handling
+
+The `Helper` class provides a highly optimized `iterator()` method that handles concurrent pagination and video fetching. Since exceptions raised during initialization of videos or parsing of pages can disrupt the optimized event loop, they are caught internally by the iterator.
+
+To gracefully handle errors and apply your own retry logic without breaking concurrency, use the `on_video_error` and `on_page_error` callbacks:
+
+```python
+async def search(self, query: str):
+    page_urls = [f"https://example.com/search?q={query}&page={p}" for p in range(1, 3)]
+    
+    # Define an asynchronous error handler callback
+    async def video_error_handler(url: str, error: Exception, attempt: int) -> bool:
+        if attempt < 3:
+            print(f"Retrying {url} (Attempt {attempt}). Error: {error}")
+            return True # Return True to tell the iterator to retry
+        return False # Return False to skip this video
+        
+    async for video in self.iterator(
+        target_page_urls=page_urls,
+        max_video_concurrency=10,
+        max_page_concurrency=2,
+        video_link_extractor=self.my_extractor,
+        on_video_error=video_error_handler # Inject retry logic here!
+    ):
+        yield await video.init()
+```
+
+- **`on_video_error`**: Signature `Callable[[str, Exception, int], Awaitable[bool]]`. Invoked when a video fails to fetch or initialize.
+- **`on_page_error`**: Signature `Callable[[str, Exception, int], Awaitable[bool]]`. Invoked when a page HTML request fails.
+
+If the callback returns `True`, the inner task retries the operation seamlessly without dropping its concurrency slot.
 
 
 # HLS Downloader (Threaded Mode)
